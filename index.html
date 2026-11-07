@@ -243,6 +243,8 @@ body.locked{overflow:hidden}
 .pro-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .pro-list li{display:flex;gap:10px;align-items:flex-start;line-height:1.45}.pro-list small{color:var(--muted);font-size:12.5px}
 .pro-n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--font-num);font-size:12px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.pro-title{font-size:21px;line-height:1.35;margin:2px 0 0}
+.pro-list li{background:var(--surface-2);border-radius:12px;padding:10px 12px}.pro-list li:first-child,.pro-list li:nth-child(2){background:var(--accent-soft)}
 .pro-promo{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:13.5px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .pro-promo ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}.pro-promo small{color:var(--muted);font-size:12px}
 .pro-price{font-family:var(--font-num);font-size:28px;font-weight:700}.pro-price small{font-size:14px;color:var(--muted);font-weight:500}
@@ -883,11 +885,12 @@ function snapModal(c,sn){
     <div class="row"><button type="button" class="btn btn--danger" data-act="snap-del" data-id="${sn.id}">${ic('trash')}삭제</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">닫기</button></div>`);
 }
 const PRO_PRICE='9,900원';
-const PRO_PERKS=['<b>내 이름 워터마크</b><br><small>고객 사진이 퍼질수록 내 이름(예: 한효정코치)이 홍보돼요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료나 광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
-const proPromo=()=>`<div class="pro-promo"><b>프리미엄이면 이런 점이 좋아요 · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프리미엄 보기</button></div>`;
+const PRO_TITLE='내 브랜드를 알리는 비포·애프터';
+const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료·광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
+const proPromo=()=>`<div class="pro-promo"><b>${PRO_TITLE} · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프리미엄 보기</button></div>`;
 function premiumSheet(){
   const perks=PRO_PERKS;
-  if(!isPro()){modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO</span><h3>프리미엄으로 더 멋지게</h3>
+  if(!isPro()){modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO</span><h3 class="pro-title">${PRO_TITLE}</h3>
     <div class="pro-price">${PRO_PRICE}<small> / 월</small></div>
     <ol class="pro-list">${perks.map((t,i)=>`<li><span class="pro-n">${i+1}</span><span>${t}</span></li>`).join('')}</ol>
     <p style="margin:0;color:var(--muted);font-size:12.5px">결제는 정식 출시 때 열려요. 지금은 테스트로 프리미엄 기능을 미리 써볼 수 있어요.</p>
