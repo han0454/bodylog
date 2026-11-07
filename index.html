@@ -1,0 +1,1235 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>바디로그</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+<style>
+/* Layout: 코치용 작업대. 왼쪽 고객 목록, 가운데 어두운 촬영 스테이지(사진 비교), 아래 수치표와 공유 카드. */
+:root{
+  --bg:#F1F3F2; --surface:#FFFFFF; --surface-2:#F7F8F7; --ink:#13171A; --muted:#66707A; --line:#E0E4E2;
+  --accent:#0C8A79; --accent-soft:#E2F2EF; --accent-ink:#FFFFFF;
+  --before:#7E8995; --danger:#C8473F; --danger-soft:#FBECEA;
+  --stage:#15191C; --stage-2:#1E2327; --stage-line:#2B3136; --stage-ink:#EEF2F1; --stage-muted:#8E989F; --stage-accent:#35C8AF;
+  --font-body:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-num:"Sora","IBM Plex Sans KR",-apple-system,"Segoe UI",sans-serif;
+  --r-lg:20px; --r-md:12px; --r-sm:8px;
+  --shadow:0 1px 2px rgba(19,23,26,.04),0 8px 24px rgba(19,23,26,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1113; --surface:#161A1D; --surface-2:#1B2023; --ink:#ECF0EF; --muted:#98A2A9; --line:#272D31;
+  --accent:#33C2AA; --accent-soft:#163430; --accent-ink:#06201C; --before:#8C97A2; --danger:#EC7A72; --danger-soft:#3A1D1B;
+  --stage:#0A0C0E; --stage-2:#14181B; --stage-line:#262C30;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1113; --surface:#161A1D; --surface-2:#1B2023; --ink:#ECF0EF; --muted:#98A2A9; --line:#272D31;
+  --accent:#33C2AA; --accent-soft:#163430; --accent-ink:#06201C; --before:#8C97A2; --danger:#EC7A72; --danger-soft:#3A1D1B;
+  --stage:#0A0C0E; --stage-2:#14181B; --stage-line:#262C30;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar__in{display:flex;align-items:center;gap:12px;height:60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1360px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.topbar .brand>div{min-width:0}.topbar .brand b,.topbar .brand small,.save-state,.coach{white-space:nowrap}.topbar .brand small{overflow:hidden;text-overflow:ellipsis}
+.coach #coachName{max-width:6.5em;overflow:hidden;text-overflow:ellipsis}.coach,.save-state{flex:none}
+@media (max-width:480px){.topbar .brand small{display:none}.save-state #saveText{display:none}}
+.brand__mark{width:30px;height:30px;border-radius:9px;background:var(--ink);display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:3px;padding:7px 7px 7px}
+.brand__mark i{display:block;border-radius:2px}
+.brand__mark i:first-child{height:15px;background:var(--before)}
+.brand__mark i:last-child{height:10px;background:var(--stage-accent)}
+.brand b{font-family:var(--font-num);font-weight:700;letter-spacing:.06em;font-size:15px}
+.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.02em;margin-top:-3px}
+.save-state{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.save-state .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.save-state.is-dirty .dot{background:#D9A23B}
+.coach{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600}
+.coach span.av{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700}
+
+/* layout */
+.layout{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr);padding-block:16px 48px}.layout>.rail{display:none}}
+@media (min-width:961px){.only-mobile{display:none!important}}
+
+/* client rail */
+.rail{position:sticky;top:84px;align-self:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 108px)}
+.cno{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 11.5px/1.5 var(--font-num);vertical-align:1px}
+.rail__head{display:flex;align-items:center;justify-content:space-between}
+.rail__head h2{font-size:16px;margin:0}
+.rail__head h2 small{color:var(--muted);font-weight:500;margin-left:6px;font-family:var(--font-num)}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:0 12px;height:42px;color:var(--muted)}
+.search input{border:0;background:none;outline:0;flex:1;min-width:0;color:var(--ink);font-size:14px}
+.client-list{display:flex;flex-direction:column;gap:4px;overflow:auto;margin:0 -6px;padding:0 6px}
+.client{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--r-md);text-align:left;width:100%}
+.client:hover{background:var(--surface-2)}
+.client.is-active{background:var(--accent-soft)}
+.client .av{width:38px;height:38px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.client.is-active .av{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.client .tx{min-width:0;flex:1}
+.client .tx b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client .tx small{display:block;color:var(--muted);font-size:12.5px}
+.client .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;white-space:nowrap}
+.empty-note{color:var(--muted);font-size:13.5px;padding:12px 4px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 16px;border-radius:var(--r-md);font-weight:600;font-size:14px;white-space:nowrap;transition:background .15s,transform .1s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn--primary{background:var(--accent);color:var(--accent-ink)}
+.btn--primary:hover{filter:brightness(1.05)}
+.btn--line{border:1px solid var(--line);background:var(--surface)}
+.btn--line:hover{background:var(--surface-2)}
+.btn--danger{background:var(--danger-soft);color:var(--danger)}
+.btn--sm{height:34px;padding:0 12px;font-size:13px;border-radius:10px}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface)}
+.icon-btn:hover{background:var(--surface-2)}
+.icon-btn--accent{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* main */
+.main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.client-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.client-head .av{width:52px;height:52px;border-radius:16px;background:var(--ink);color:var(--surface);display:grid;place-items:center;font-size:20px;font-weight:700;flex:none}
+.client-head .tx{flex:1;min-width:180px}
+.client-head h1{margin:0;font-size:24px;line-height:1.25;letter-spacing:-.02em;text-wrap:balance}
+.client-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.client-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+.period{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:12.5px;border-radius:999px;padding:3px 10px;margin-left:8px;vertical-align:3px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px}
+.card__head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.card__head h2{margin:0;font-size:18px;letter-spacing:-.01em}
+.card__head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.label{font-family:var(--font-num);font-size:11px;letter-spacing:.14em;font-weight:600;color:var(--muted);text-transform:uppercase}
+
+/* stage */
+.stage{background:var(--stage);color:var(--stage-ink);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
+.stage__bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stage__bar .grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;background:var(--stage-2);border:1px solid var(--stage-line);font-size:13.5px;font-weight:600;color:var(--stage-ink)}
+.chip:hover{border-color:#3d454b}
+.chip.is-on{background:var(--stage-ink);color:var(--stage);border-color:transparent}
+.switch{width:34px;height:20px;border-radius:999px;background:#3a4147;position:relative;transition:background .2s;flex:none}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.is-on>.switch,.switch.is-on{background:var(--stage-accent)}
+.is-on>.switch::after,.switch.is-on::after{transform:translateX(14px)}
+.chip .switch{margin-right:-4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.slot{display:flex;flex-direction:column;gap:8px;min-width:0}
+.frame{position:relative;aspect-ratio:3/4;max-width:100%;border-radius:14px;overflow:hidden;background:var(--stage-2);outline:1px solid var(--stage-line);touch-action:pan-y}
+.frame canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.frame.is-editing{outline:2px solid var(--stage-accent);touch-action:none;cursor:grab}
+.frame.is-editing.mask{cursor:crosshair}
+.frame.is-dim{opacity:.55}
+.frame__empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--stage-muted);font-size:13px;text-align:center;padding:12px}
+.frame__empty .plus{width:52px;height:52px;border-radius:50%;border:1.5px dashed #4a535a;display:grid;place-items:center;color:var(--stage-ink)}
+.frame__empty:hover .plus{border-color:var(--stage-accent);color:var(--stage-accent)}
+.frame__badge{position:absolute;left:10px;top:10px;font-family:var(--font-num);font-size:11px;font-weight:700;letter-spacing:.14em;padding:5px 9px;border-radius:7px;background:rgba(10,12,14,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;pointer-events:none}
+.frame__badge.after{background:var(--stage-accent);color:#06201C}
+.frame__hint{position:absolute;left:10px;right:10px;bottom:10px;font-size:12px;padding:6px 10px;border-radius:8px;background:rgba(10,12,14,.66);color:#fff;text-align:center;pointer-events:none}
+.slot__meta{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12.5px;color:var(--stage-muted);min-height:28px}
+.slot__meta b{color:var(--stage-ink);font-weight:600}
+.mini{height:28px;padding:0 10px;white-space:nowrap;flex:none;border-radius:8px;background:var(--stage-2);border:1px solid var(--stage-line);font-size:12px;font-weight:600;color:var(--stage-ink);display:inline-flex;align-items:center;gap:5px}
+.tools{background:var(--stage-2);border:1px solid var(--stage-line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.tools__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tools__row .grow{flex:1}
+.tools p{margin:0;font-size:12.5px;color:var(--stage-muted)}
+.seg{display:inline-flex;background:var(--stage);border-radius:10px;padding:3px;gap:2px}
+.seg button{height:30px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:700;font-family:var(--font-num);letter-spacing:.08em;color:var(--stage-muted)}
+.seg button.is-on{background:var(--stage-ink);color:var(--stage)}
+.range{display:flex;align-items:center;gap:10px;flex:1;min-width:200px;font-size:12.5px;color:var(--stage-muted)}
+.range input{flex:1;accent-color:var(--stage-accent);min-width:0}
+.range output{font-family:var(--font-num);color:var(--stage-ink);min-width:44px;text-align:right}
+
+/* metrics */
+.mtable{width:100%;border-collapse:collapse;table-layout:fixed}
+.mtable col.c1{width:84px}.mtable col.c4{width:78px}
+.mtable th{font-weight:600;text-align:left;font-size:12px;color:var(--muted);padding:0 8px 8px;letter-spacing:.02em}
+.mtable td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.mtable td:first-child{font-weight:600;font-size:14px;white-space:nowrap;padding-left:0}
+.mtable td:first-child small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
+.field{display:flex;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;height:40px;padding:0 10px;gap:4px}
+.field:focus-within{border-color:var(--accent);background:var(--surface)}
+.field input{border:0;background:none;outline:0;width:100%;min-width:0;font-family:var(--font-num);font-size:15px;font-variant-numeric:tabular-nums}
+.field small{color:var(--muted);font-size:12px}
+.delta{font-family:var(--font-num);font-weight:700;font-size:16px;white-space:nowrap;text-align:right}
+.delta.good{color:var(--accent)}
+.delta.bad{color:var(--danger)}
+.delta.none{color:var(--muted);font-weight:500}
+.mtable th:last-child,.mtable td:last-child{text-align:right;padding-right:0}
+.mwrap{overflow-x:auto}
+.mtable{min-width:0}
+@media (max-width:520px){.mtable col.c1{width:58px}.mtable col.c4{width:56px}.mtable td{padding:6px 3px}.field{padding:0 7px}.field input{font-size:14px}.field input[type=date]{font-size:12px;letter-spacing:-.02em}.field small{display:none}.delta{font-size:14px}.card{padding:16px}}
+
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:20px}
+@media (max-width:1180px){.two{grid-template-columns:minmax(0,1fr)}}
+.memo{width:100%;min-height:84px;resize:vertical;border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-md);padding:10px 12px;font-size:14px;line-height:1.55;outline:0}
+.memo:focus{border-color:var(--accent);background:var(--surface)}
+
+/* share */
+.share{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:18px;align-items:start}
+@media (max-width:520px){.share{grid-template-columns:minmax(0,1fr)}.share canvas{max-width:200px;margin:0 auto}}
+.share canvas{width:100%;border-radius:12px;display:block;border:1px solid var(--line);background:#111416}
+.opt-list{display:flex;flex-direction:column;gap:2px;margin:12px 0 16px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;text-align:left;width:100%}
+.opt small{display:block;color:var(--muted);font-size:12px}
+.opt .switch{background:var(--line)}
+.opt .switch.is-on{background:var(--accent)}
+.lseg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.lseg button{flex:1;height:40px;border-radius:9px;font-weight:600;font-size:13.5px;line-height:1.15}
+.lseg button small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
+.lseg button.is-on{background:var(--surface);box-shadow:var(--shadow);color:var(--ink)}
+
+/* sheet / modal */
+.overlay{position:fixed;inset:0;background:rgba(8,10,12,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--surface);color:var(--ink);border-radius:22px;width:100%;max-width:440px;max-height:calc(100% - 16px);overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.sheet h3{margin:0;font-size:19px}
+.sheet .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.sheet .row .grow{flex:1}
+.form-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.form-field input{height:46px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:0 14px;font-size:15px;color:var(--ink);font-weight:500;outline:0}
+.form-field input:focus{border-color:var(--accent);background:var(--surface)}
+@media (max-width:600px){.overlay{align-items:flex-end;padding:0}.sheet{border-radius:22px 22px 0 0;max-width:none;padding-bottom:max(22px,env(safe-area-inset-bottom,0px))}}
+.export-img{width:100%;border-radius:14px;display:block;max-height:60vh;object-fit:contain;background:#111416;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+.save-tip.is-flash{animation:tipflash 1.2s ease 2;outline:2px solid var(--accent)}@keyframes tipflash{50%{background:#fff3b0}}
+.save-tip--main{font-size:15px;padding:12px 14px;text-align:center}
+.save-tip{margin:0;font-size:13px;line-height:1.55;color:var(--ink);background:var(--accent-soft);border-radius:12px;padding:10px 12px}
+
+.hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.hist__item{display:flex;flex-direction:column;gap:4px;text-align:left;padding:6px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2)}
+.hist__item:hover{border-color:var(--accent)}
+.hist__item img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:9px;background:#111416;display:block}
+.hist__item b{font-size:13px;padding:0 2px}
+.hist__item small{font-size:11.5px;color:var(--muted);padding:0 2px 2px}
+.auth{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding-block:max(24px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.auth__card{width:100%;max-width:400px;margin:auto 0;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px 22px;display:flex;flex-direction:column;gap:18px;box-shadow:var(--shadow)}
+.auth__card .brand{margin:0 0 4px}
+.auth__err{margin:0;color:var(--danger);font-size:13px}
+.auth__demo{color:var(--accent);font-weight:600;font-size:14px;padding:6px;align-self:center}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;cursor:pointer}.agree input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--accent)}
+.terms{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:-6px}.terms summary{cursor:pointer;color:var(--accent);font-weight:600}.terms p{margin:8px 0 0}
+.linkbtn{color:var(--muted);font-size:13px;text-decoration:underline;padding:4px 0}
+.auth__note{margin:0;color:var(--muted);font-size:12px;line-height:1.55;text-align:center}
+/* cover screen shown for ~1.8s (or until tapped) before login / the app */
+.splash{position:fixed;inset:0;z-index:90;background:#0F1214;color:#EEF2F1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:max(56px,env(safe-area-inset-top,0px)) 24px max(40px,env(safe-area-inset-bottom,0px));overflow:hidden;cursor:pointer;transition:opacity .45s ease,visibility .45s}
+.splash.is-out{opacity:0;visibility:hidden}
+.splash__glow{position:absolute;width:140vmax;height:140vmax;left:50%;top:46%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(53,200,175,.22),rgba(53,200,175,0) 70%);pointer-events:none}
+.splash__mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;position:relative;animation:splashIn .8s cubic-bezier(.2,.8,.2,1) both}
+.splash__mark{width:96px;height:96px;border-radius:26px;background:#1E2428;box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);position:relative}
+.splash__mark i{position:absolute;bottom:26px;width:20px;border-radius:6px}
+.splash__mark i:first-child{left:24px;height:44px;background:#7E8995}
+.splash__mark i:last-child{left:52px;height:28px;background:#35C8AF;animation:splashGrow 1.2s .3s cubic-bezier(.2,.8,.2,1) both}
+.splash__word{font:700 40px/1 Sora,var(--font-num);letter-spacing:.06em}
+.splash__sub{font-size:13.5px;color:#8E989F}
+.splash__line{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:20px;font-weight:700;line-height:1.35;animation:splashIn .8s .35s cubic-bezier(.2,.8,.2,1) both}
+.splash__line b{color:#35C8AF}
+.splash__bar{position:relative;width:64px;height:3px;border-radius:3px;background:#262C30;overflow:hidden;margin-top:22px}
+.splash__bar i{position:absolute;inset:0;background:#35C8AF;transform-origin:left;animation:splashBar 1.8s linear both}
+@keyframes splashIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes splashGrow{from{height:10px}to{height:28px}}
+@keyframes splashBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.splash__mid,.splash__line,.splash__mark i,.splash__bar i{animation:none}}
+body.locked{overflow:hidden}
+.pro-tag{font-family:var(--font-num);font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pro-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.pro-list li{display:flex;gap:10px;align-items:flex-start;line-height:1.45}.pro-list small{color:var(--muted);font-size:12.5px}
+.pro-n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--font-num);font-size:12px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.pro-promo{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:13.5px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.pro-promo ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}.pro-promo small{color:var(--muted);font-size:12px}
+.pro-price{font-family:var(--font-num);font-size:28px;font-weight:700}.pro-price small{font-size:14px;color:var(--muted);font-weight:500}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="topbar"><div class="topbar__in">
+  <div class="brand"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><div><b>BODYLOG</b><small>바디로그 · 비포애프터</small></div></div>
+  <span class="save-state" id="saveState"><span class="dot"></span><span id="saveText">저장됨</span></span>
+  <button class="coach" id="coachBtn" type="button"><span class="av" id="coachAv">코</span><span id="coachName">코치</span></button>
+</div></header>
+
+<div class="layout">
+  <aside class="rail" aria-label="고객 목록">
+    <div class="rail__head"><h2>고객 <small class="num" id="clientCount">0</small></h2>
+      <button class="icon-btn icon-btn--accent" type="button" data-act="add-client" aria-label="새 고객 등록"><svg class="i"><use href="#i-plus"/></svg></button></div>
+    <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="search" placeholder="이름 또는 전화번호 검색" autocomplete="off"></label>
+    <div class="client-list" id="clientList"></div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" hidden>
+<input type="file" id="inbodyInput" accept="image/*" hidden>
+<input type="file" id="backupInput" accept=".json,application/json" hidden>
+<div id="modalRoot"></div>
+<div id="splash" class="splash" role="button" aria-label="시작하기">
+  <div class="splash__glow" aria-hidden="true"></div>
+  <div class="splash__mid">
+    <div class="splash__mark" aria-hidden="true"><i></i><i></i></div>
+    <div class="splash__word">BODYLOG</div>
+    <div class="splash__sub">바디로그 · 코치 전용 비포·애프터 기록</div>
+  </div>
+  <div class="splash__line"><span>나를 위한 시간,</span><b>만들어내는 변화</b></div>
+  <div class="splash__bar" aria-hidden="true"><i></i></div>
+</div>
+<div id="auth" class="auth" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L11 21"/><path d="M22 21H7M5 11l9 9"/></symbol>
+  <symbol id="i-face" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 20h6M12 5v15"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+</svg>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const ic=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c};
+const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+/* ---------- storage (IndexedDB, falls back to memory) ---------- */
+const DB={db:null,
+  async open(){try{this.db=await new Promise((res,rej)=>{const r=indexedDB.open('bodylog',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}catch(e){this.db=null}},
+  get(k){return new Promise(res=>{if(!this.db)return res(undefined);try{const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(undefined)}catch(e){res(undefined)}})},
+  set(k,v){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)}catch(e){res(false)}})},
+  del(k){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)}catch(e){res(false)}})}
+};
+
+/* ---------- state ---------- */
+const blankRec=()=>({photo:null,date:'',weight:'',fat:'',muscle:'',visceral:'',tf:{s:1,x:0,y:0},mask:[]});
+let S={coach:'코치',activeId:null,face:true,ratio:'916',showName:false,showNums:true,clients:[]};
+const photos={}; // id -> {el,w,h}
+const smudges={}; // photo id -> cache
+const thumbs={}; // snapshot id -> jpeg data URL (stored apart from the main state so typing stays fast)
+let mode=null; // {kind:'adjust'|'mask', side}
+let ghost=true, brush=0.075;
+let query='';
+
+const active=()=>S.clients.find(c=>c.id===S.activeId)||null;
+
+let saveTimer=null;
+function markDirty(){const s=$('#saveState');s.classList.add('is-dirty');$('#saveText').textContent='저장 중…';clearTimeout(saveTimer);saveTimer=setTimeout(persist,500)}
+let ACC=null; // signed-in coach account {id,email}
+async function persist(){clearTimeout(saveTimer);if(!ACC)return false;const ok=await DB.set('state:'+ACC.id,JSON.stringify(S));const s=$('#saveState');s.classList.toggle('is-dirty',!ok);$('#saveText').textContent=ok?'저장됨':'이 브라우저에 저장 불가';return ok}
+function touch(c){if(c){c.updatedAt=Date.now()}markDirty()}
+
+/* ---------- sample client (generated drawing, clearly marked) ---------- */
+function samplePhoto(after){
+  const W=900,H=1200,c=mk(W,H),x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#d8dcd9');g.addColorStop(.82,'#c3c8c4');g.addColorStop(.821,'#aeb3ae');g.addColorStop(1,'#a3a8a3');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();
+  if(after){x.translate(470,70);x.scale(.9,.9);x.translate(-450,0)}else{x.translate(0,0)}
+  const skin='#e2b897',hair='#3b2a22';
+  const waist=after?118:150, hip=after?160:190, thigh=after?62:76, arm=after?30:36;
+  // hair back
+  x.fillStyle=hair;x.beginPath();x.ellipse(450,236,92,104,0,0,7);x.fill();
+  x.beginPath();x.ellipse(450,330,70,60,0,0,7);x.fill();
+  // neck
+  x.fillStyle=skin;x.fillRect(426,300,48,60);
+  // face
+  x.beginPath();x.ellipse(450,250,60,74,0,0,7);x.fill();
+  x.fillStyle='#2a201b';x.beginPath();x.ellipse(428,248,6,4,0,0,7);x.ellipse(472,248,6,4,0,0,7);x.fill();
+  x.strokeStyle='#2a201b';x.lineWidth=4;x.lineCap='round';x.beginPath();x.moveTo(414,232);x.lineTo(438,230);x.moveTo(462,230);x.lineTo(486,232);x.stroke();
+  x.strokeStyle='#a5584a';x.lineWidth=5;x.beginPath();x.moveTo(436,292);x.quadraticCurveTo(450,300,464,292);x.stroke();
+  // fringe
+  x.fillStyle=hair;x.beginPath();x.moveTo(386,240);x.quadraticCurveTo(392,150,452,146);x.quadraticCurveTo(516,150,516,232);x.quadraticCurveTo(480,190,430,196);x.quadraticCurveTo(402,206,386,240);x.fill();
+  // arms
+  x.strokeStyle=skin;x.lineCap='round';x.lineWidth=arm;
+  x.beginPath();x.moveTo(370,390);x.quadraticCurveTo(318,520,330,660);x.stroke();
+  x.beginPath();x.moveTo(530,390);x.quadraticCurveTo(582,520,570,660);x.stroke();
+  // torso
+  x.fillStyle=skin;x.beginPath();x.moveTo(372,372);x.quadraticCurveTo(450,350,528,372);x.quadraticCurveTo(450+waist*.55,520,450+waist/2,610);x.lineTo(450-waist/2,610);x.quadraticCurveTo(450-waist*.55,520,372,372);x.fill();
+  x.fillStyle='#252a31';x.beginPath();x.moveTo(372,372);x.quadraticCurveTo(450,352,528,372);x.lineTo(450+waist*.62,500);x.quadraticCurveTo(450,512,450-waist*.62,500);x.closePath();x.fill();
+  // leggings
+  x.fillStyle='#34404c';x.beginPath();x.moveTo(450-waist/2-4,600);x.lineTo(450+waist/2+4,600);x.quadraticCurveTo(450+hip/2+8,700,450+hip/2-6,780);
+  x.lineTo(450+thigh+18,1110);x.lineTo(462,1110);x.lineTo(452,790);x.lineTo(448,790);x.lineTo(438,1110);x.lineTo(450-thigh-18,1110);x.lineTo(450-hip/2+6,780);x.quadraticCurveTo(450-hip/2-8,700,450-waist/2-4,600);x.fill();
+  x.fillStyle='#e9ecef';x.beginPath();x.ellipse(450-thigh/2-8,1120,thigh/2+16,18,0,0,7);x.ellipse(450+thigh/2+8,1120,thigh/2+16,18,0,0,7);x.fill();
+  x.restore();
+  x.fillStyle='rgba(19,23,26,.55)';x.font='600 26px "IBM Plex Sans KR",sans-serif';x.fillText('예시 그림',28,1170);
+  return {el:c,w:W,h:H};
+}
+function makeSample(){
+  const d=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
+  const map=([x,y])=>[470+.9*(x-450),70+.9*y];
+  const c={id:'sample',name:'예시 고객',phone:'010-1234-5678',memo:'예시 데이터입니다. 자유롭게 수정하거나 삭제해도 됩니다.',createdAt:Date.now(),updatedAt:Date.now()-3*864e5,sample:true,consent:1,history:[],
+    before:{photo:'sample:before',date:d(87),weight:'72.4',fat:'34.2',muscle:'24.1',visceral:'9',tf:{s:1,x:0,y:0},mask:[],
+      pose:{sh:[450,375],hip:[450,610],ank:[450,1105],face:{cx:450,cy:262,r:66}}},
+    after:{photo:'sample:after',date:d(3),weight:'68.8',fat:'29.8',muscle:'24.6',visceral:'7',tf:{s:1,x:0,y:0},mask:[],
+      pose:{sh:map([450,375]),hip:map([450,610]),ank:map([450,1105]),face:{cx:470,cy:70+.9*262,r:66*.9}}}};
+  photos['sample:before']=photos['sample:before']||samplePhoto(false);photos['sample:after']=photos['sample:after']||samplePhoto(true);
+  autoMask(c.before);autoMask(c.after);autoAlign(c);
+  return c;
+}
+
+/* ---------- photo loading ---------- */
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src})}
+async function ensurePhoto(id){
+  if(!id||photos[id])return photos[id];
+  if(id==='sample:before'){photos[id]=samplePhoto(false);return photos[id]}
+  if(id==='sample:after'){photos[id]=samplePhoto(true);return photos[id]}
+  const v=await DB.get('img:'+id); if(!v)return null;
+  // photos are stored as raw bytes; older versions stored a Blob, which iPhone in-app browsers often fail to keep
+  const blob=v instanceof Blob?v:v.buf?new Blob([v.buf],{type:v.type||'image/jpeg'}):null; if(!blob)return null;
+  try{const url=URL.createObjectURL(blob);const im=await loadImg(url);photos[id]={el:im,w:im.naturalWidth,h:im.naturalHeight};return photos[id]}catch(e){return null}
+}
+async function importFile(file){
+  const url=URL.createObjectURL(file);const im=await loadImg(url);
+  const k=Math.min(1,1800/Math.max(im.naturalWidth,im.naturalHeight));
+  const c=mk(im.naturalWidth*k,im.naturalHeight*k);const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);
+  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));
+  const id=uid();const ok=await DB.set('img:'+id,{type:'image/jpeg',buf:await blob.arrayBuffer()});if(!ok)toast('이 브라우저에서는 사진이 저장되지 않아요. 사파리나 크롬에서 열어주세요');photos[id]={el:c,w:c.width,h:c.height};return id;
+}
+
+/* ---------- automatic body alignment (MediaPipe pose landmarks) ---------- */
+const MPV='0.10.14',MPCDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MPV}`;
+let poseP=null;
+function getPose(){
+  if(poseP)return poseP;
+  poseP=(async()=>{
+    const V=await import(`${MPCDN}/vision_bundle.mjs`);
+    const rel=p=>new URL(p,location.href).href;
+    const tries=[
+      [{wasmLoaderPath:rel('mp/vision_wasm_internal.js'),wasmBinaryPath:rel('mp/vision_wasm_internal.wasm')},rel('mp/pose_model.wasm')],
+      [{wasmLoaderPath:`${MPCDN}/wasm/vision_wasm_internal.js`,wasmBinaryPath:`${MPCDN}/wasm/vision_wasm_internal.wasm`},'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task']];
+    for(const [w,m] of tries){try{return await V.PoseLandmarker.createFromOptions(w,{baseOptions:{modelAssetPath:m,delegate:'CPU'},runningMode:'IMAGE',numPoses:1})}catch(e){console.warn('pose load',e)}}
+    throw new Error('pose unavailable');
+  })();
+  poseP.catch(()=>{poseP=null});
+  return poseP;
+}
+async function detectPose(rec){
+  const ph=photos[rec.photo];if(!ph)return null;
+  const lm=await getPose();const res=lm.detect(ph.el);const L=res&&res.landmarks&&res.landmarks[0];if(!L)return null;
+  const P=i=>[L[i].x*ph.w,L[i].y*ph.h],vis=i=>(L[i].visibility??1)>.5,mid=(a,b)=>[(P(a)[0]+P(b)[0])/2,(P(a)[1]+P(b)[1])/2];
+  if(!vis(11)||!vis(12))return null;
+  const fpts=[0,2,5,9,10].map(P),fc=[fpts.reduce((s,p)=>s+p[0],0)/5,fpts.reduce((s,p)=>s+p[1],0)/5];
+  const earW=Math.hypot(P(7)[0]-P(8)[0],P(7)[1]-P(8)[1]),shW=Math.hypot(P(11)[0]-P(12)[0],P(11)[1]-P(12)[1]);
+  return {sh:mid(11,12),hip:(vis(23)&&vis(24))?mid(23,24):null,ank:(vis(27)&&vis(28))?mid(27,28):null,face:{cx:fc[0],cy:fc[1],r:Math.max(earW*.62,shW*.2)}};
+}
+// place points a (shoulders) and b (ankles/hips) of a photo at frame heights ta,tb, body centred on tx. Frame is the fixed 3:4 box.
+function solveTf(ph,a,b,ta,tb,tx){
+  const W=1,H=4/3,base=Math.max(W/ph.w,H/ph.h);
+  const s=clamp((tb-ta)/Math.max(1,b[1]-a[1])/base,.4,3),sc=s*base,dw=ph.w*sc,dh=ph.h*sc;
+  const dx=tx-(a[0]+b[0])/2*sc,dy=ta-a[1]*sc;
+  return {s,x:(dx-(W-dw)/2)/W,y:(dy-(H-dh)/2)/H};
+}
+function autoAlign(c){
+  const B=c.before,A=c.after,H=4/3;let done=0;
+  const lower=(B.pose&&B.pose.ank&&(!A.pose||A.pose.ank))?'ank':'hip';
+  if(B.pose&&B.pose[lower]){const tb=lower==='ank'?.94*H:.29*H+.3*H;B.tf=solveTf(photos[B.photo],B.pose.sh,B.pose[lower],.29*H,tb,.5);done++}
+  if(A.pose&&A.pose[lower]){
+    if(B.pose&&B.pose[lower]){const phB=photos[B.photo],L=layoutOf(B,phB,1,H);const fy=p=>L.dy+p[1]*L.sc,fx=p=>L.dx+p[0]*L.sc;
+      A.tf=solveTf(photos[A.photo],A.pose.sh,A.pose[lower],fy(B.pose.sh),fy(B.pose[lower]),(fx(B.pose.sh)+fx(B.pose[lower]))/2)}
+    else{const tb=lower==='ank'?.94*H:.59*H;A.tf=solveTf(photos[A.photo],A.pose.sh,A.pose[lower],.29*H,tb,.5)}
+    done++}
+  return done;
+}
+// rough face-only cover from the face landmarks; hair above the forehead stays visible
+function autoMask(rec){
+  const f=rec.pose&&rec.pose.face;if(!f)return;const r=f.r,st=[];let row=0;
+  for(let y=-.72*r;y<=.8*r;y+=r*.26,row++){const xs=[];for(let x=-.62*r;x<=.62*r;x+=r*.22)xs.push(x);if(row%2)xs.reverse();xs.forEach(x=>st.push([f.cx+x,f.cy+y,r*.46]))}
+  rec.mask=[st];
+}
+async function runAuto(c,{quiet=false}={}){
+  const need=['before','after'].filter(k=>c[k].photo&&!c[k].pose&&!c[k].poseTried);
+  if(need.length){
+    if(!quiet)toast('몸 위치를 인식하는 중…');
+    try{for(const k of need){c[k].poseTried=true;const p=await detectPose(c[k]);if(p){c[k].pose=p;if(!c[k].mask.length)autoMask(c[k])}}}
+    catch(e){toast('자동 인식을 불러오지 못했습니다. 인터넷 연결을 확인하거나 직접 맞춰주세요');return 0}
+  }
+  const n=autoAlign(c);touch(c);await persist();renderMain();
+  const missing=['before','after'].filter(k=>c[k].photo&&!c[k].pose);
+  if(missing.length)toast(`${missing.map(k=>k.toUpperCase()).join('·')} 사진에서 몸을 찾지 못했습니다. 전신 사진인지 확인하거나 직접 맞춰주세요`);
+  else if(n&&!quiet)toast('두 사진의 몸 위치와 크기를 자동으로 맞췄습니다');
+  return n;
+}
+
+/* ---------- face smudge: semi-transparent rough eraser over brushed area only ---------- */
+function flatStamps(mask){const out=[];mask.forEach((st,si)=>st.forEach((p,i)=>out.push({p,prev:i?st[i-1]:null,si,i})));return out}
+function smudgeFor(id,rec){
+  const ph=photos[id];if(!ph)return null;
+  let c=smudges[id];
+  if(!c||c.recRef!==rec){
+    const k=Math.min(1,1000/Math.max(ph.w,ph.h)),w=Math.round(ph.w*k),h=Math.round(ph.h*k);
+    const base=mk(w,h),bx=base.getContext('2d');
+    const tiny=mk(Math.max(6,w/34),Math.max(6,h/34));const tx=tiny.getContext('2d');tx.imageSmoothingQuality='high';tx.drawImage(ph.el,0,0,tiny.width,tiny.height);
+    const mid=mk(w/6,h/6);const mx=mid.getContext('2d');mx.imageSmoothingQuality='high';mx.drawImage(tiny,0,0,mid.width,mid.height);
+    bx.imageSmoothingQuality='high';bx.drawImage(mid,0,0,w,h);
+    bx.fillStyle='rgba(240,238,234,.38)';bx.fillRect(0,0,w,h);
+    c=smudges[id]={k,w,h,base,mask:mk(w,h),comp:mk(w,h),drawn:0,recRef:rec};
+  }
+  const flat=flatStamps(rec.mask);
+  if(flat.length<c.drawn){c.mask.getContext('2d').clearRect(0,0,c.w,c.h);c.drawn=0}
+  if(flat.length!==c.drawn||c.dirty!==false){
+    const mc=c.mask.getContext('2d');
+    for(let n=c.drawn;n<flat.length;n++){
+      const {p,prev,si,i}=flat[n],k=c.k,seed=si*1009+i;
+      const r=p[2]*k*(.82+.36*hash(seed)),ox=(hash(seed+1)-.5)*r*.4,oy=(hash(seed+2)-.5)*r*.4,cx=p[0]*k+ox,cy=p[1]*k+oy;
+      const g=mc.createRadialGradient(cx,cy,r*.15,cx,cy,r);
+      g.addColorStop(0,'rgba(0,0,0,.95)');g.addColorStop(.5,'rgba(0,0,0,.8)');g.addColorStop(1,'rgba(0,0,0,0)');
+      mc.fillStyle=g;mc.beginPath();mc.arc(cx,cy,r,0,Math.PI*2);mc.fill();
+      if(prev){ // rough eraser streaks along the stroke
+        mc.lineCap='round';
+        for(let s=0;s<3;s++){const j=(hash(seed*3+s)-.5)*r*1.1;mc.strokeStyle=`rgba(0,0,0,${.18+.14*hash(seed+s+7)})`;mc.lineWidth=r*(.22+.35*hash(seed+s+11));
+          mc.beginPath();mc.moveTo(prev[0]*k+j,prev[1]*k+j*.6);mc.lineTo(p[0]*k+j*.7,p[1]*k+j);mc.stroke()}
+      }
+    }
+    c.drawn=flat.length;
+    const cc=c.comp.getContext('2d');cc.globalCompositeOperation='source-over';cc.clearRect(0,0,c.w,c.h);cc.drawImage(c.base,0,0);
+    cc.globalCompositeOperation='destination-in';cc.drawImage(c.mask,0,0);cc.drawImage(c.mask,0,0);cc.globalCompositeOperation='source-over';
+    c.dirty=false;
+  }
+  return c.comp;
+}
+
+/* ---------- text eraser: fills brushed areas with the surrounding background (multi-scale fill) ---------- */
+const erases={};
+const strokesOf=rec=>mode&&mode.kind==='text'?(rec.erase||(rec.erase=[])):rec.mask;
+function eraseFor(id,rec){
+  const ph=photos[id];if(!ph)return null;
+  const flat=flatStamps(rec.erase),sig=rec.erase.length+':'+flat.length;
+  let c=erases[id];if(c&&c.sig===sig&&c.recRef===rec)return c.out;
+  const k=Math.min(1,1000/Math.max(ph.w,ph.h)),w=Math.round(ph.w*k),h=Math.round(ph.h*k);
+  const m=mk(w,h),mc=m.getContext('2d');mc.fillStyle='#000';
+  flat.forEach(({p,prev})=>{const r=p[2]*k;mc.beginPath();mc.arc(p[0]*k,p[1]*k,r,0,Math.PI*2);mc.fill();
+    if(prev){mc.lineWidth=r*2;mc.lineCap='round';mc.strokeStyle='#000';mc.beginPath();mc.moveTo(prev[0]*k,prev[1]*k);mc.lineTo(p[0]*k,p[1]*k);mc.stroke()}});
+  // grow the hole a little so letter edges never survive
+  const mg=mk(w,h),gc=mg.getContext('2d');for(const [dx,dy] of [[0,0],[3,0],[-3,0],[0,3],[0,-3]])gc.drawImage(m,dx,dy);
+  const holed=mk(w,h),hc=holed.getContext('2d');hc.drawImage(ph.el,0,0,w,h);hc.globalCompositeOperation='destination-out';hc.drawImage(mg,0,0);
+  const fill=mk(w,h),fc=fill.getContext('2d');fc.imageSmoothingQuality='high';
+  for(const f of [96,48,24,12,6,3]){const sm=mk(w/f,h/f),sc=sm.getContext('2d');sc.imageSmoothingQuality='high';sc.drawImage(holed,0,0,sm.width,sm.height);
+    for(let i=0;i<(f>=48?4:7);i++)fc.drawImage(sm,0,0,w,h)}
+  // keep a little photo grain so the patch does not look flat
+  const avg=mk(1,1);avg.getContext('2d').drawImage(holed,0,0,1,1);
+  const out=mk(w,h),oc=out.getContext('2d');oc.drawImage(avg,0,0,w,h);oc.globalAlpha=1;oc.drawImage(avg,0,0,w,h);oc.drawImage(fill,0,0);
+  const id2=oc.getImageData(0,0,w,h),d=id2.data;for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*6;d[i]+=n;d[i+1]+=n;d[i+2]+=n;d[i+3]=255}oc.putImageData(id2,0,0);
+  const soft=mk(w,h),so=soft.getContext('2d');so.filter='blur(2px)';so.drawImage(mg,0,0);if(so.filter!=='blur(2px)')so.drawImage(mg,0,0);
+  oc.globalCompositeOperation='destination-in';oc.drawImage(soft,0,0);
+  erases[id]={sig,recRef:rec,out};return out;
+}
+
+/* ---------- drawing a record into a fixed 3:4 box (frame never moves; only the photo inside does) ---------- */
+function layoutOf(rec,ph,W,H){const base=Math.max(W/ph.w,H/ph.h),sc=base*rec.tf.s,dw=ph.w*sc,dh=ph.h*sc;return{sc,dw,dh,dx:(W-dw)/2+rec.tf.x*W,dy:(H-dh)/2+rec.tf.y*H}}
+function drawRec(x,rec,W,H,face,alpha=1){
+  const ph=rec.photo&&photos[rec.photo];if(!ph)return null;
+  const L=layoutOf(rec,ph,W,H);
+  x.save();x.globalAlpha=alpha;x.imageSmoothingQuality='high';x.drawImage(ph.el,L.dx,L.dy,L.dw,L.dh);
+  if(rec.erase&&rec.erase.length){const ef=eraseFor(rec.photo,rec);if(ef)x.drawImage(ef,L.dx,L.dy,L.dw,L.dh)}
+  if(face&&rec.mask.length){const sm=smudgeFor(rec.photo,rec);if(sm){x.globalAlpha=alpha*.95;x.drawImage(sm,L.dx,L.dy,L.dw,L.dh)}}
+  x.restore();return L;
+}
+
+/* ---------- render main ---------- */
+const sides=[['before','BEFORE'],['after','AFTER']];
+function fmtDate(s){if(!s)return '날짜 미입력';const [y,m,d]=s.split('-');return `${y}.${m}.${d}`}
+function periodText(c){if(!c.before.date||!c.after.date)return '';const d=Math.round((new Date(c.after.date)-new Date(c.before.date))/864e5);if(d<=0)return '';const w=Math.floor(d/7);return w>=1?(d%7?`${w}주 ${d%7}일`:`${w}주`):`${d}일`}
+function ago(t){const d=Math.floor((Date.now()-t)/864e5);return d<=0?'오늘 업데이트':d===1?'어제 업데이트':`${d}일 전 업데이트`}
+function initials(n){return (n||'?').trim().slice(0,1)}
+const digits=v=>String(v||'').replace(/\D/g,'');
+function fmtPhone(v){const d=digits(v).slice(0,11);if(d.length<4)return d;if(d.length<8)return d.slice(0,3)+'-'+d.slice(3);return d.slice(0,3)+'-'+d.slice(3,d.length-4)+'-'+d.slice(-4)}
+function findByPhone(v,exceptId){const d=digits(v);if(d.length<10)return null;return S.clients.find(c=>c.id!==exceptId&&digits(c.phone)===d)||null}
+function maskName(n){n=(n||'').trim();if(n.length<=1)return n;if(n.length===2)return n[0]+'*';return n[0]+'*'.repeat(n.length-2)+n[n.length-1]}
+
+function renderRail(){
+  const q=query.trim().toLowerCase();
+  const list=S.clients.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.phone||'').replace(/-/g,'').includes(q.replace(/-/g,''))).sort((a,b)=>b.updatedAt-a.updatedAt);
+  // number real clients in the order they were registered (1번, 2번 …); the sample client gets no number
+  const real=S.clients.filter(c=>!c.sample);const order=real.map((c,i)=>[c,i]).sort((a,b)=>((a[0].createdAt||0)-(b[0].createdAt||0))||(a[1]-b[1]));const no={};order.forEach(([c],i)=>no[c.id]=i+1);
+  $('#clientCount').textContent=real.length+'명';
+  $('#clientList').innerHTML=list.length?list.map(c=>`<button type="button" class="client ${c.id===S.activeId?'is-active':''}" data-act="pick" data-id="${c.id}">
+    <span class="av">${esc(initials(c.name))}</span><span class="tx"><b>${no[c.id]?`<span class="cno">${no[c.id]}번</span>`:''}${esc(c.name)}</b><small>${esc(c.phone||'전화번호 없음')} · ${ago(c.updatedAt)}</small></span>${c.sample?'<span class="tag">예시</span>':''}</button>`).join(''):`<p class="empty-note">${q?'검색 결과가 없습니다.':'등록된 고객이 없습니다. + 버튼으로 첫 고객을 등록하세요.'}</p>`;
+}
+
+function deltaCell(a,b,unit,lowerIsGood){
+  const A=parseFloat(a),B=parseFloat(b);if(isNaN(A)||isNaN(B))return `<span class="delta none">–</span>`;
+  const d=Math.round((B-A)*10)/10;const good=lowerIsGood?d<0:d>0;const cls=d===0?'none':good?'good':'bad';
+  return `<span class="delta ${cls}">${d>0?'+':''}${d}${unit}</span>`;
+}
+const METRICS=[['weight','체중','kg',true,'kg'],['fat','체지방률','%',true,'%p'],['muscle','골격근량','kg',false,'kg'],['visceral','내장지방','',true,'']];
+
+function renderMain(){
+  const c=active(),m=$('#main');
+  if(!c&&S.clients.length){m.innerHTML=`<div class="card" style="text-align:center;padding:48px 20px"><h2 style="margin:0 0 6px">새 고객을 입력할 차례예요</h2><p style="color:var(--muted);margin:0 0 18px">저장한 고객은 <b>고객 목록</b>에서 이름이나 전화번호로 다시 불러올 수 있어요.</p><div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn btn--line" data-act="clients">${ic('users')}고객 목록</button><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button></div></div>`;return}
+  if(!c){m.innerHTML=`<div class="card" style="text-align:center;padding:48px 20px"><h2 style="margin:0 0 6px">첫 고객을 등록해보세요</h2><p style="color:var(--muted);margin:0 0 18px">고객을 등록하면 비포·애프터 사진과 체성분 수치를 기록할 수 있습니다.</p><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button></div>`;return}
+  const per=periodText(c);
+  m.innerHTML=`
+  <section class="client-head">
+    <span class="av">${esc(initials(c.name))}</span>
+    <div class="tx"><h1>${esc(c.name)}${per?`<span class="period num">${per} 변화</span>`:''}</h1><p>${esc(c.phone||'전화번호 없음')} · ${ago(c.updatedAt)}${c.sample?' · 예시 데이터':''} · ${c.consent?'<span style="color:var(--accent)">사진 활용 동의</span>':'<span style="color:var(--danger)">사진 활용 동의 미확인</span>'}</p></div>
+    <div class="actions">
+      <button class="btn btn--line btn--sm only-mobile" data-act="clients">${ic('users')}고객 목록</button>
+      <button class="btn btn--line btn--sm" data-act="edit-client">${ic('edit')}고객 정보</button>
+      <button class="btn btn--primary btn--sm" data-act="save">${ic('save')}기록 저장</button>
+    </div>
+  </section>
+
+  <section class="stage" aria-label="사진 비교">
+    <div class="stage__bar">
+      <button type="button" class="chip ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}">${ic('face')}얼굴 가림 <span class="switch"></span></button>
+      <span class="grow"></span>
+      <button type="button" class="chip" data-act="auto-align">${ic('sparkle')}자동 맞추기</button>
+      <button type="button" class="chip ${mode&&mode.kind==='adjust'?'is-on':''}" data-act="mode-adjust">${ic('move')}직접 맞추기</button>
+      <button type="button" class="chip ${mode&&mode.kind==='mask'?'is-on':''}" data-act="mode-mask">${ic('eraser')}얼굴 지우기</button>
+      <button type="button" class="chip ${mode&&mode.kind==='text'?'is-on':''}" data-act="mode-text">${ic('type')}글씨 지우기</button>
+    </div>
+    <div class="pair">${sides.map(([k,L])=>{const r=c[k];const editing=mode&&mode.side===k;const dim=mode&&!editing;
+      return `<div class="slot">
+        <div class="frame ${editing?'is-editing '+(mode.kind!=='adjust'?'mask':''):''} ${dim?'is-dim':''}" data-frame="${k}">
+          <canvas></canvas>
+          ${r.photo?'':`<button type="button" class="frame__empty" data-act="upload" data-side="${k}"><span class="plus">${ic('camera')}</span>${L} 사진 추가</button>`}
+          <span class="frame__badge ${k}">${L}</span>
+          ${r.photo&&S.face&&!r.mask.length&&!editing?`<span class="frame__hint">얼굴 지우기로 얼굴을 문질러 가려주세요</span>`:''}
+          ${editing&&mode.kind==='adjust'?`<span class="frame__hint">드래그로 이동 · 두 손가락이나 휠로 확대</span>`:''}
+          ${editing&&mode.kind==='mask'?`<span class="frame__hint">얼굴 위를 손가락으로 문지르세요</span>`:''}
+          ${editing&&mode.kind==='text'?`<span class="frame__hint">지울 글씨 위를 손가락으로 문지르세요</span>`:''}
+        </div>
+        <div class="slot__meta"><span></span>${r.photo?`<button type="button" class="mini" data-act="upload" data-side="${k}">${ic('camera')}교체</button>`:''}</div>
+      </div>`}).join('')}</div>
+    ${toolsHTML(c)}
+  </section>
+
+  <div class="two">
+    <section class="card" aria-label="체성분 수치">
+      <div class="card__head"><div><span class="label">Body metrics</span><h2>수치 기록</h2></div></div>
+      <div class="mwrap"><table class="mtable"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th>변화</th></tr></thead><tbody>
+        <tr><td>측정일</td>${sides.map(([k])=>`<td><label class="field"><input type="date" id="date-${k}" data-field="date" data-side="${k}" value="${esc(c[k].date)}" aria-label="${k} 측정일"></label></td>`).join('')}<td><span class="delta ${per?'':'none'} num">${per||'–'}</span></td></tr>
+        ${METRICS.map(([f,lab,u,low,du])=>`<tr><td>${lab}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" id="${f}-${k}" data-field="${f}" data-side="${k}" value="${esc(c[k][f])}" placeholder="0.0" aria-label="${k} ${lab}"><small>${u}</small></label></td>`).join('')}<td data-delta="${f}">${deltaCell(c.before[f],c.after[f],du,low)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div style="margin-top:16px"><span class="label">코칭 메모</span><textarea class="memo" id="memo" data-field="memo" placeholder="식단, 운동, 상담 내용을 적어두세요">${esc(c.memo||'')}</textarea></div>
+    </section>
+
+    <section class="card" aria-label="공유 이미지">
+      <div class="card__head"><div><span class="label">Share card</span><h2>SNS 공유 이미지</h2></div></div>
+      <div class="share">
+        <div>
+          <div class="lseg" role="group" aria-label="사이즈">
+            <button type="button" data-act="ratio" data-v="916" class="${S.ratio==='916'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
+            <button type="button" data-act="ratio" data-v="34" class="${S.ratio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
+          </div>
+          <div class="opt-list">
+            <button type="button" class="opt" data-act="face"><span>얼굴 가림<small>지운 부분을 반투명하게 덮습니다</small></span><span class="switch ${S.face?'is-on':''}"></span></button>
+            <button type="button" class="opt" data-act="opt-name"><span>이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가려서 표시'}</small></span><span class="switch ${S.showName?'is-on':''}"></span></button>
+            <button type="button" class="opt" data-act="premium"><span>워터마크 · ${isPro()?(S.wmOff?'없음':esc(wmLabel())):'BODYLOG 로고'}<small>${isPro()?'프리미엄 사용 중 · 눌러서 바꾸기':'<b style="color:var(--ink)">우리가게 이름 알리기</b>와 원하는 문구를 사용할 수 있어요'}</small></span><span class="pro-tag">${isPro()?'PRO':'PRO 🔒'}</span></button>
+            <button type="button" class="opt" data-act="opt-nums"><span>수치 표시<small>체중·체지방·근육 변화</small></span><span class="switch ${S.showNums?'is-on':''}"></span></button>
+          </div>
+          <button type="button" class="btn btn--primary" style="width:100%" data-act="export">${ic('share')}공유 이미지 만들기</button>
+        </div>
+        <canvas id="preview" aria-label="공유 이미지 미리보기"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" aria-label="고객 파일">
+    <div class="card__head"><div><span class="label">Client file</span><h2>저장된 비교 기록 <small class="num" style="color:var(--muted);font-weight:500">${(c.history||[]).length}</small></h2></div><p>기록 저장을 누를 때마다 이 고객 파일에 쌓입니다</p></div>
+    ${(c.history||[]).length?`<div class="hist">${c.history.map(h=>`<button type="button" class="hist__item" data-act="snap" data-id="${h.id}"><img src="${thumbs[h.id]||h.thumb||''}" alt="" loading="lazy"><b class="num">${new Date(h.savedAt).toLocaleDateString('ko-KR')}</b><small>${h.period?esc(h.period)+' 변화':'기간 미입력'}${h.before.weight&&h.after.weight?' · '+(Math.round((h.after.weight-h.before.weight)*10)/10)+'kg':''}</small></button>`).join('')}</div>`
+      :`<p class="empty-note" style="padding:4px 0">아직 저장된 기록이 없습니다. 위의 <b>기록 저장</b>을 누르면 지금 비교 화면이 이 고객 파일에 저장됩니다.</p>`}
+  </section>`;
+  bindFrames();drawAll();
+}
+
+function toolsHTML(c){
+  if(!mode)return '';
+  const r=c[mode.side];
+  const segs=`<div class="seg">${sides.map(([k,L])=>`<button type="button" class="${mode.side===k?'is-on':''}" data-act="side" data-side="${k}">${L}</button>`).join('')}</div>`;
+  if(mode.kind==='adjust')return `<div class="tools">
+    <div class="tools__row">${segs}<span class="grow"></span>
+      <button type="button" class="mini ${ghost?'':''}" data-act="ghost" aria-pressed="${ghost}">${ic('layers')}겹쳐보기 ${ghost?'ON':'OFF'}</button>
+      <button type="button" class="mini" data-act="reset-tf">${ic('reset')}처음으로</button>
+      <button type="button" class="mini" data-act="done" style="background:var(--stage-accent);color:#06201C;border-color:transparent">${ic('check')}완료</button></div>
+    <div class="tools__row"><label class="range">크기<input type="range" id="zoom" min="40" max="300" step="1" value="${Math.round(r.tf.s*100)}"><output class="num" id="zoomOut">${Math.round(r.tf.s*100)}%</output></label></div>
+    <p>틀은 고정되어 있고 사진만 움직입니다. 겹쳐보기를 켜면 반대쪽 사진이 흐리게 겹쳐 보여 머리·어깨·발 위치를 쉽게 맞출 수 있습니다.</p></div>`;
+  const st=strokesOf(r),isText=mode.kind==='text';
+  return `<div class="tools">
+    <div class="tools__row">${segs}<span class="grow"></span>
+      <button type="button" class="mini" data-act="undo" ${st.length?'':'disabled style="opacity:.4"'}>${ic('undo')}되돌리기</button>
+      <button type="button" class="mini" data-act="clear-mask" ${st.length?'':'disabled style="opacity:.4"'}>${ic('trash')}모두 지우기</button>
+      <button type="button" class="mini" data-act="done" style="background:var(--stage-accent);color:#06201C;border-color:transparent">${ic('check')}완료</button></div>
+    <div class="tools__row"><label class="range">붓 크기<input type="range" id="brush" min="3" max="18" step="0.5" value="${brush*100}"><output class="num" id="brushOut">${Math.round(brush*100)}</output></label></div>
+    <p>${isText?'옷·벽·체중계의 글씨나 로고 위를 문지르면 주변 배경색으로 자연스럽게 지워집니다.':'얼굴 부분만 대충 문지르면 반투명한 지우개 자국처럼 가려지고, 머리카락과 몸은 그대로 보입니다.'}</p></div>`;
+}
+
+/* ---------- canvas rendering ---------- */
+function sizeCanvas(cv){const r=cv.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2.5);const w=Math.round(r.width*d),h=Math.round(r.height*d);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}return{W:r.width,H:r.height,d}}
+const lastL={};
+function drawFrame(k){
+  const c=active();if(!c)return;const fr=document.querySelector(`[data-frame="${k}"]`);if(!fr)return;
+  const cv=fr.querySelector('canvas');const {W,H,d}=sizeCanvas(cv);if(!W)return;
+  const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);
+  const r=c[k];const editing=mode&&mode.side===k;
+  lastL[k]=drawRec(x,r,W,H,S.face||(editing&&mode.kind==='mask'));
+  if(editing&&mode.kind==='adjust'){
+    const other=c[k==='before'?'after':'before'];
+    if(ghost&&other.photo&&photos[other.photo])drawRec(x,other,W,H,S.face,.38);
+    x.strokeStyle='rgba(53,200,175,.75)';x.lineWidth=1;x.setLineDash([4,5]);
+    for(let i=1;i<6;i++){x.beginPath();x.moveTo(0,H*i/6);x.lineTo(W,H*i/6);x.stroke()}
+    x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.stroke();x.setLineDash([]);
+  }else if(mode&&mode.kind==='adjust'){ // show guides on the other frame too so both line up
+    x.strokeStyle='rgba(255,255,255,.28)';x.lineWidth=1;x.setLineDash([4,5]);
+    for(let i=1;i<6;i++){x.beginPath();x.moveTo(0,H*i/6);x.lineTo(W,H*i/6);x.stroke()}
+    x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.stroke();x.setLineDash([]);
+  }
+}
+let raf=0;
+function drawAll(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{drawFrame('before');drawFrame('after');drawPreview()})}
+let pvTimer;function drawPreviewSoon(){clearTimeout(pvTimer);pvTimer=setTimeout(drawPreview,120)}
+
+/* ---------- share image ---------- */
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+// BODYLOG logo watermark, bottom-right inside each photo (right edge rx, bottom edge by)
+const isPro=()=>S.plan==='premium';
+// share-card headline by the client's age group (no age → the original line)
+const HEADLINES={20:['지금 만든 몸이','평생의 기준이 된다'],30:['바쁜 하루 속에서도','나를 먼저 챙겼다'],40:['포기 대신','다시 시작을 택했다'],50:['나이는 숫자일 뿐,','변화는 진짜다'],60:['늦지 않았다,','몸이 증명한다'],70:['멈추지 않으면','몸은 답한다'],0:['나를 위한 시간,','만들어내는 변화']};
+const headlineFor=age=>{const a=parseInt(age,10);if(!(a>=15))return HEADLINES[0];return HEADLINES[Math.min(70,Math.max(20,Math.floor(a/10)*10))]};
+const brandName=()=>isPro()?(S.wmText||S.club||'핏코치'):'핏코치';
+const wmLabel=()=>isPro()?(S.wmOff?'':(S.wmText||S.club||'핏코치')):'BODYLOG';
+function watermark(x,rx,by,k=1){
+  if(isPro()){const t=wmLabel();if(!t)return; // premium: the coach's own name instead of the BODYLOG logo
+    x.save();x.font=`700 ${Math.round(22*k)}px "IBM Plex Sans KR", sans-serif`;const pad=Math.round(14*k),w=x.measureText(t).width+pad*2,h=Math.round(40*k);
+    x.globalAlpha=.78;x.fillStyle='rgba(12,14,16,.55)';rr(x,rx-w,by-h,w,h,h/2);x.fill();x.fillStyle='#fff';x.textBaseline='middle';x.fillText(t,rx-w+pad,by-h/2+1);x.restore();return}
+  x.save();x.font=`700 ${Math.round(22*k)}px Sora, sans-serif`;
+  const tw=x.measureText('BODYLOG').width,mk2=Math.round(30*k),pad=Math.round(10*k),w=pad+mk2+Math.round(8*k)+tw+pad+4,h=mk2+pad*2-4,X=rx-w,Y=by-h;
+  x.globalAlpha=.78;x.fillStyle='rgba(12,14,16,.55)';rr(x,X,Y,w,h,h/2);x.fill();
+  const mx=X+pad,my=Y+(h-mk2)/2;x.fillStyle='#2A3136';rr(x,mx,my,mk2,mk2,mk2*.26);x.fill();
+  x.fillStyle='#7E8995';rr(x,mx+mk2*.24,my+mk2*.28,mk2*.2,mk2*.5,2);x.fill();x.fillStyle='#35C8AF';rr(x,mx+mk2*.54,my+mk2*.46,mk2*.2,mk2*.32,2);x.fill();
+  x.fillStyle='#fff';x.textBaseline='middle';x.fillText('BODYLOG',mx+mk2+Math.round(8*k),Y+h/2+1);x.restore();
+}
+function renderCard(scale=1){
+  const c=active();const W=1080,H=S.ratio==='916'?1920:1440;const cv=mk(W*scale,H*scale),x=cv.getContext('2d');x.scale(scale,scale);
+  const ink='#F1F4F3',mut='#8C979E',acc='#35C8AF',bg='#111416';
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  const tall=S.ratio==='916',M=56,gap=18,pw=(W-M*2-gap)/2,ph34=pw*4/3;let ph=ph34;
+  let y=tall?150:84;
+  x.textBaseline='alphabetic';
+  // brand
+  x.fillStyle='#2A3136';rr(x,M,y-38,46,46,12);x.fill();x.fillStyle='#7E8995';rr(x,M+11,y-27+6,10,24,3);x.fill();x.fillStyle=acc;rr(x,M+25,y-27+14,10,16,3);x.fill();
+  x.fillStyle=ink;x.font='700 26px Sora, sans-serif';x.fillText('BODYLOG',M+62,y-6);
+  const days=(c.before.date&&c.after.date)?Math.round((new Date(c.after.date)-new Date(c.before.date))/864e5):0;
+  x.font='600 28px "IBM Plex Sans KR", sans-serif';
+  const club=brandName();
+  if(club){let t=club;while(t.length>1&&x.measureText(t).width>W-M*2-260)t=t.slice(0,-1);if(t!==club)t+='…';x.fillStyle=ink;x.fillText(t,W-M-x.measureText(t).width,y-6)}
+  y+=tall?104:78;
+  let [h1,h2]=headlineFor(c.age);if(days>0)h1=`${days}일, ${h1}`;let hs=tall?66:52;const top=y;x.font=`700 ${hs}px "IBM Plex Sans KR", sans-serif`;
+  const hmax=W-M*2-(days>0?330:0);while(hs>36&&Math.max(x.measureText(h1).width,x.measureText(h2).width)>hmax){hs-=2;x.font=`700 ${hs}px "IBM Plex Sans KR", sans-serif`}
+  x.fillStyle=ink;x.fillText(h1,M,y);y+=Math.round(hs*1.22);x.fillStyle=acc;x.fillText(h2,M,y);
+  if(days>0){ // the period is the key point of the card: big number on the right of the headline
+    const big=tall?96:78,bx=W-M,by=y;x.textAlign='right';
+    x.fillStyle=acc;x.font=`700 ${big}px Sora, sans-serif`;const nw=x.measureText(String(days)).width;
+    x.font=`700 ${Math.round(big*.42)}px "IBM Plex Sans KR", sans-serif`;const uw=x.measureText('일째').width;x.fillText('일째',bx,by);
+    x.font=`700 ${big}px Sora, sans-serif`;x.fillText(String(days),bx-uw-8,by);
+    x.fillStyle=mut;x.font=`600 ${tall?28:24}px "IBM Plex Sans KR", sans-serif`;x.fillText('진행 기간',bx,by-big-(tall?8:6));
+    x.textAlign='left';}
+  y+=tall?52:44;x.fillStyle=mut;x.font='500 28px "IBM Plex Sans KR", sans-serif';
+  x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 ${brandName()}`,M,y);
+  y+=tall?56:40;
+  if(tall){ // 9:16: photos grow to fill the card instead of leaving an empty bottom
+    const hasNums=S.showNums&&METRICS.some(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
+    ph=Math.max(ph34,H-96-60-y-(hasNums?110+200:60));
+  }
+  const f=ph/ph34; // same aligned 3:4 layout, scaled up and centred, so before/after stay matched
+  sides.forEach(([k,L],i)=>{
+    const X=M+i*(pw+gap);x.save();rr(x,X,y,pw,ph,22);x.clip();x.fillStyle='#1C2125';x.fillRect(X,y,pw,ph);
+    x.translate(X-(pw*f-pw)/2,y);const ok=drawRec(x,c[k],pw*f,ph,S.face);x.restore();
+    if(!ok){x.fillStyle=mut;x.font='500 26px "IBM Plex Sans KR", sans-serif';x.fillText('사진 없음',X+pw/2-52,y+ph/2)}
+    x.font='700 22px Sora, sans-serif';const tw=x.measureText(L).width+28;
+    x.fillStyle=i?acc:'rgba(17,20,22,.72)';rr(x,X+16,y+16,tw,40,10);x.fill();x.fillStyle=i?'#06201C':'#fff';x.fillText(L,X+30,y+44);
+    if(ok)watermark(x,X+pw-16,y+ph-16,tall?1:.9);
+    x.fillStyle='#C9D1D6';x.font='600 32px Sora, sans-serif';x.fillText(c[k].date?fmtDate(c[k].date):'',X+4,y+ph+48);
+  });
+  y+=ph+(tall?110:86);
+  if(S.showNums){
+    const cols=METRICS.filter(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
+    if(cols.length){
+      const cw=(W-M*2-(cols.length-1)*14)/cols.length,ch=tall?200:170,q=cols.length>3?.82:1,px=cols.length>3?18:24;
+      cols.forEach(([f,lab,u,low,du],i)=>{const X=M+i*(cw+14);x.fillStyle='#1A1F22';rr(x,X,y,cw,ch,20);x.fill();
+        const A=parseFloat(c.before[f]),B=parseFloat(c.after[f]),d=Math.round((B-A)*10)/10;const good=low?d<0:d>0;
+        x.fillStyle=mut;x.font='500 24px "IBM Plex Sans KR", sans-serif';x.fillText(lab,X+px,y+44);
+        x.fillStyle=d===0?ink:good?acc:'#F08A80';x.font=`700 ${Math.round((tall?58:50)*q)}px Sora, sans-serif`;const t=(d>0?'+':'')+d;x.fillText(t,X+px,y+(tall?116:104));
+        const tw=x.measureText(t).width;x.font=`600 ${Math.round(26*q)}px Sora, sans-serif`;x.fillText(du,X+px+6+tw,y+(tall?116:104));
+        x.fillStyle=mut;x.font=`500 ${Math.round(22*q)}px "IBM Plex Sans KR", sans-serif`;x.fillText(`${A} → ${B} ${u}`,X+px,y+ch-30);
+      });
+    }
+  }
+  x.fillStyle='#4D575E';x.font='500 22px "IBM Plex Sans KR", sans-serif';x.fillText('개인차가 있을 수 있습니다 · BODYLOG로 기록',M,H-(tall?96:56));
+  return cv;
+}
+function drawPreview(){const pv=$('#preview');if(!pv||!active())return;const card=renderCard(.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
+
+/* ---------- pointer interaction on fixed frames ---------- */
+function bindFrames(){
+  document.querySelectorAll('[data-frame]').forEach(fr=>{
+    const k=fr.dataset.frame;const pts=new Map();let start=null,stroke=null;
+    const pos=e=>{const r=fr.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top,W:r.width,H:r.height}};
+    fr.addEventListener('pointerdown',e=>{
+      if(!mode)return;const c=active();if(!c||!c[k].photo)return;
+      if(mode.side!==k){mode.side=k;renderMain();return}
+      e.preventDefault();fr.setPointerCapture(e.pointerId);const p=pos(e);pts.set(e.pointerId,p);
+      if(mode.kind==='adjust'){start={tf:{...c[k].tf},pts:new Map([...pts].map(([i,v])=>[i,{...v}]))}}
+      else{stroke=[];strokesOf(c[k]).push(stroke);addStamp(c[k],stroke,p);drawFrame(k)}
+    });
+    fr.addEventListener('pointermove',e=>{
+      if(!mode||!pts.has(e.pointerId))return;const c=active();const p=pos(e);pts.set(e.pointerId,p);const r=c[k];
+      if(mode.kind==='adjust'&&start){
+        const now=[...pts.values()],was=[...start.pts.values()];
+        if(now.length>=2&&was.length>=2){
+          const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);const f=dist(now[0],now[1])/Math.max(1,dist(was[0],was[1]));
+          r.tf.s=clamp(start.tf.s*f,.4,3);
+          const mx=(now[0].x+now[1].x)/2-(was[0].x+was[1].x)/2,my=(now[0].y+now[1].y)/2-(was[0].y+was[1].y)/2;
+          r.tf.x=start.tf.x+mx/p.W;r.tf.y=start.tf.y+my/p.H;
+        }else{const a=was[0],b=now[0];r.tf.x=start.tf.x+(b.x-a.x)/p.W;r.tf.y=start.tf.y+(b.y-a.y)/p.H}
+        syncZoom(r);drawFrame(k);
+      }else if((mode.kind==='mask'||mode.kind==='text')&&stroke){addStamp(r,stroke,p);drawFrame(k)}
+    });
+    const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);
+      if(mode&&mode.kind==='adjust'){const c=active();start=pts.size?{tf:{...c[k].tf},pts:new Map([...pts].map(([i,v])=>[i,{...v}]))}:null;if(!pts.size){touch(c);drawPreviewSoon()}}
+      else if(stroke&&!pts.size){stroke=null;touch(active());renderToolsOnly();drawPreviewSoon()}};
+    fr.addEventListener('pointerup',end);fr.addEventListener('pointercancel',end);
+    fr.addEventListener('wheel',e=>{if(!mode||mode.kind!=='adjust'||mode.side!==k)return;e.preventDefault();const r=active()[k];r.tf.s=clamp(r.tf.s*Math.exp(-e.deltaY*.0015),.4,3);syncZoom(r);drawFrame(k);touch(active());drawPreviewSoon()},{passive:false});
+  });
+}
+function addStamp(rec,stroke,p){
+  const L=lastL[mode.side];if(!L)return;const ix=(p.x-L.dx)/L.sc,iy=(p.y-L.dy)/L.sc,r=brush*p.W/L.sc;
+  const last=stroke[stroke.length-1];
+  if(last){const dx=ix-last[0],dy=iy-last[1],d=Math.hypot(dx,dy),step=r*.35;if(d<step)return;const n=Math.floor(d/step);for(let i=1;i<=n;i++)stroke.push([last[0]+dx*i/n,last[1]+dy*i/n,r])}
+  else stroke.push([ix,iy,r]);
+}
+function syncZoom(r){const z=$('#zoom');if(z){z.value=Math.round(r.tf.s*100);$('#zoomOut').textContent=Math.round(r.tf.s*100)+'%'}}
+function renderToolsOnly(){const c=active();const t=document.querySelector('.stage .tools');if(t){const tmp=document.createElement('div');tmp.innerHTML=toolsHTML(c);t.replaceWith(tmp.firstElementChild)}}
+
+/* ---------- modals ---------- */
+function modal(html,onMount){const root=$('#modalRoot');root.innerHTML=`<div class="overlay" data-act="close-overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;onMount&&onMount(root.querySelector('.sheet'));const f=root.querySelector('input');if(f&&window.matchMedia('(min-width:601px)').matches)f.focus()}
+function closeModal(){$('#modalRoot').innerHTML=''}
+function clientForm(c){
+  const isNew=!c;c=c||{name:'',phone:'',memo:''};
+  modal(`<h3>${isNew?'새 고객 등록':'고객 정보'}</h3>
+    <form id="clientForm" style="display:flex;flex-direction:column;gap:12px">
+      <label class="form-field">이름<input id="f-name" maxlength="30" value="${esc(c.name)}" placeholder="예: 김민지"></label>
+      <label class="form-field">나이 <small style="color:var(--muted);font-weight:500">(공유 이미지에 표시돼요, 비워도 돼요)</small><input id="f-age" inputmode="numeric" maxlength="3" value="${esc(c.age||'')}" placeholder="예: 52"></label>
+      <label class="form-field">전화번호<input id="f-phone" inputmode="tel" maxlength="20" value="${esc(c.phone)}" placeholder="010-0000-0000"></label>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;cursor:pointer"><input type="checkbox" id="f-consent" ${c.consent?'checked':''} style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent)"><span><b>사진 활용 동의 받음</b><br><small style="color:var(--muted)">얼굴을 가린 비포·애프터 사진을 SNS·홍보에 쓰는 것에 고객이 동의했어요</small></span></label>
+      <p id="f-err" style="margin:0;color:var(--danger);font-size:13px" hidden>이름을 입력해주세요.</p>
+      ${isNew?'<div id="f-match" hidden></div><p style="margin:-4px 0 0;color:var(--muted);font-size:12.5px">이미 등록된 번호를 입력하면 그 고객 기록을 바로 불러옵니다.</p>':''}
+      <div class="row">${isNew?'':`<button type="button" class="btn btn--danger" data-act="ask-delete">${ic('trash')}삭제</button><span class="grow"></span>`}
+        <button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">${isNew?'등록':'저장'}</button></div>
+      <div id="delConfirm" hidden style="background:var(--danger-soft);border-radius:12px;padding:12px;font-size:13.5px;color:var(--danger)">
+        <b>${esc(c.name)}</b> 고객의 사진과 기록이 모두 삭제됩니다. 되돌릴 수 없습니다.
+        <div class="row" style="margin-top:10px"><button type="button" class="btn btn--line btn--sm" data-act="cancel-delete">취소</button><button type="button" class="btn btn--sm" style="background:var(--danger);color:#fff" data-act="confirm-delete">삭제하기</button></div></div>
+    </form>`,sh=>{
+      const phoneEl=sh.querySelector('#f-phone');
+      phoneEl.addEventListener('input',()=>{
+        const pos=phoneEl.value.length;phoneEl.value=fmtPhone(phoneEl.value);
+        const hit=findByPhone(phoneEl.value,isNew?null:active().id);
+        if(isNew&&hit){S.activeId=hit.id;mode=null;markDirty();closeModal();renderAll();toast(`${hit.name} 고객 기록을 불러왔습니다`);return}
+        if(isNew){const d=digits(phoneEl.value),box=sh.querySelector('#f-match');
+          const list=d.length>=4?S.clients.filter(c=>digits(c.phone).includes(d)).slice(0,3):[];
+          box.hidden=!list.length;box.innerHTML=list.length?`<div style="display:flex;flex-direction:column;gap:4px;background:var(--accent-soft);border-radius:12px;padding:8px"><small style="color:var(--accent);font-weight:600;padding:2px 6px">등록된 고객</small>${list.map(c=>`<button type="button" class="client" data-act="pick" data-id="${c.id}"><span class="av">${esc(initials(c.name))}</span><span class="tx"><b>${esc(c.name)}</b><small>${esc(c.phone)}</small></span></button>`).join('')}</div>`:''}
+        if(!isNew){const err=sh.querySelector('#f-err');err.hidden=!hit;if(hit)err.textContent=`${hit.name} 고객이 이미 이 번호를 사용 중입니다.`}
+      });
+      sh.querySelector('#clientForm').addEventListener('submit',e=>{e.preventDefault();
+        const age=(sh.querySelector('#f-age').value.match(/\d+/)||[''])[0].slice(0,3),name=sh.querySelector('#f-name').value.trim(),phone=sh.querySelector('#f-phone').value.trim(),consent=sh.querySelector('#f-consent').checked;
+        if(!name){const er=sh.querySelector('#f-err');er.textContent='이름을 입력해주세요.';er.hidden=false;return}
+        if(findByPhone(phone,isNew?null:active().id))return;
+        if(isNew){const n={id:uid(),name,age,phone,consent:consent?Date.now():0,memo:'',history:[],createdAt:Date.now(),updatedAt:Date.now(),before:blankRec(),after:blankRec()};S.clients.push(n);S.activeId=n.id;mode=null;toast(`${name} 고객을 등록했습니다`)}
+        else{const t=active();t.name=name;t.age=age;t.phone=phone;t.consent=consent?(t.consent||Date.now()):0;touch(t);toast('고객 정보를 저장했습니다')}
+        markDirty();closeModal();renderAll();
+      });
+    });
+}
+function clientsSheet(){
+  modal(`<h3>고객 목록 <small style="color:var(--accent);font-size:15px;font-weight:700;margin-left:4px">총 ${S.clients.filter(c=>!c.sample).length}명</small></h3><label class="search"><svg class="i"><use href="#i-search"/></svg><input id="m-search" placeholder="이름 또는 전화번호 검색" autocomplete="off" value="${esc(query)}"></label>
+    <div class="client-list" id="mClientList"></div><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button>`,sh=>{
+      const fill=()=>{renderRail();sh.querySelector('#mClientList').innerHTML=$('#clientList').innerHTML};fill();
+      sh.querySelector('#m-search').addEventListener('input',e=>{query=e.target.value;$('#search').value=query;const hit=findByPhone(query);
+        if(hit){S.activeId=hit.id;mode=null;markDirty();closeModal();renderAll();toast(`${hit.name} 고객 기록을 불러왔습니다`);return}fill()});
+    });
+}
+function snapModal(c,sn){
+  const row=(l,f,u)=>sn.before[f]||sn.after[f]?`<tr><td>${l}</td><td class="num">${esc(sn.before[f]||'–')}</td><td class="num">${esc(sn.after[f]||'–')}</td><td class="num">${u}</td></tr>`:'';
+  modal(`<h3>${new Date(sn.savedAt).toLocaleString('ko-KR',{dateStyle:'medium',timeStyle:'short'})} 저장</h3><img class="export-img" src="${thumbs[sn.id]||sn.thumb||''}" alt="저장된 비교 이미지">
+    <div class="mwrap"><table class="mtable" style="min-width:0"><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th></th></tr></thead><tbody>${row('측정일','date','')}${row('체중','weight','kg')}${row('체지방률','fat','%')}${row('골격근량','muscle','kg')}${row('내장지방','visceral','')}</tbody></table></div>
+    <div class="row"><button type="button" class="btn btn--danger" data-act="snap-del" data-id="${sn.id}">${ic('trash')}삭제</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">닫기</button></div>`);
+}
+const PRO_PRICE='9,900원';
+const PRO_PERKS=['<b>내 이름 워터마크</b><br><small>고객 사진이 퍼질수록 내 이름(예: 한효정코치)이 홍보돼요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료나 광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
+const proPromo=()=>`<div class="pro-promo"><b>프리미엄이면 이런 점이 좋아요 · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프리미엄 보기</button></div>`;
+function premiumSheet(){
+  const perks=PRO_PERKS;
+  if(!isPro()){modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO</span><h3>프리미엄으로 더 멋지게</h3>
+    <div class="pro-price">${PRO_PRICE}<small> / 월</small></div>
+    <ol class="pro-list">${perks.map((t,i)=>`<li><span class="pro-n">${i+1}</span><span>${t}</span></li>`).join('')}</ol>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">결제는 정식 출시 때 열려요. 지금은 테스트로 프리미엄 기능을 미리 써볼 수 있어요.</p>
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" data-act="pro-on">프리미엄 미리 써보기</button></div>`);return}
+  modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO 사용 중</span><h3>워터마크 설정</h3>
+    <form id="wmForm" style="display:flex;flex-direction:column;gap:12px">
+    <label class="form-field">워터마크 문구<input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'핏코치')} (비워두면 클럽 이름)"></label>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="f-wmoff" ${S.wmOff?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">워터마크 없애기</label>
+    <div class="row"><button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">저장</button></div></form>`,sh=>{
+    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderMain();toast('워터마크를 저장했습니다')})});
+}
+function coachForm(){
+  modal(`<h3>코치 정보</h3><form id="coachForm" style="display:flex;flex-direction:column;gap:12px"><label class="form-field">코치 이름 (공유 이미지에 표시)<input id="f-coach" maxlength="20" value="${esc(S.coach)}"></label>
+    <label class="form-field">클럽 이름 (프리미엄이면 공유 이미지에 표시, 무료는 핏코치)<input id="f-club" maxlength="24" value="${esc(S.club||'')}" placeholder="핏코치"></label>
+    <p style="margin:0;color:var(--muted);font-size:13px">${ACC&&ACC.demo?'둘러보기 모드 (가입 전)':'로그인: '+esc(ACC?ACC.email:'')}</p>
+    ${ACC&&!ACC.demo?'<div class="row" style="gap:14px"><button type="button" class="linkbtn" data-act="pin-change">비밀번호 바꾸기</button><button type="button" class="linkbtn" style="color:var(--danger)" data-act="acct-delete">회원 탈퇴</button></div>':''}
+    <div style="background:var(--accent-soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">기록 백업</b><small style="color:var(--muted);line-height:1.5">고객 사진·수치·저장 기록을 파일 하나로 보관해요. 휴대폰을 바꾸거나 앱을 지워도 이 파일로 되살릴 수 있어요.</small>
+      <div class="row" style="gap:8px"><button type="button" class="btn btn--line btn--sm" data-act="backup">${ic('share')}백업 파일 만들기</button><button type="button" class="btn btn--line btn--sm" data-act="restore">백업 불러오기</button></div></div>
+    <div class="row"><button type="button" class="btn btn--line" id="logoutBtn">${ACC&&ACC.demo?'회원가입 하기':'로그아웃'}</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button class="btn btn--primary" type="submit">저장</button></div></form>`,sh=>{
+      sh.querySelector('#logoutBtn').addEventListener('click',()=>{authMode=(ACC&&ACC.demo)?'signup':'login';logout()});
+      sh.querySelector('#coachForm').addEventListener('submit',e=>{e.preventDefault();S.coach=sh.querySelector('#f-coach').value.trim()||'코치';S.club=sh.querySelector('#f-club').value.trim();markDirty();closeModal();renderAll()})});
+}
+function pinChangeForm(){
+  modal(`<h3>비밀번호 바꾸기</h3><form id="pinForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+    <label class="form-field">지금 비밀번호<input id="p-old" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password"></label>
+    <label class="form-field">새 비밀번호 (숫자 6자리)<input id="p-new" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+    <label class="form-field">새 비밀번호 확인<input id="p-new2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+    <p id="p-err" class="auth__err" hidden></p>
+    <div class="row"><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button class="btn btn--primary" type="submit">바꾸기</button></div></form>`,sh=>{
+    sh.querySelectorAll('[inputmode=numeric]').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/\D/g,'').slice(0,6)}));
+    sh.querySelector('#pinForm').addEventListener('submit',async e=>{e.preventDefault();const err=m=>{const p=sh.querySelector('#p-err');p.textContent=m;p.hidden=false};
+      const o=sh.querySelector('#p-old').value,n=sh.querySelector('#p-new').value;
+      const accounts=(await DB.get('accounts'))||[];const a=accounts.find(x=>x.id===ACC.id);if(!a)return err('계정을 찾을 수 없어요.');
+      if(a.hash!==await pinHash(o,a.salt))return err('지금 비밀번호가 맞지 않아요.');
+      if(!/^\d{6}$/.test(n))return err('새 비밀번호는 숫자 6자리로 입력해주세요.');
+      if(n!==sh.querySelector('#p-new2').value)return err('새 비밀번호 확인이 일치하지 않습니다.');
+      if(/^(\d)\1{5}$/.test(n)||'0123456789'.includes(n)||'9876543210'.includes(n))return err('111111, 123456 같은 쉬운 번호는 쓸 수 없어요.');
+      a.salt=uid()+uid();a.hash=await pinHash(n,a.salt);await DB.set('accounts',accounts);closeModal();toast('비밀번호를 바꿨어요')})});
+}
+function deleteAccountForm(){
+  modal(`<h3>회원 탈퇴</h3><p style="margin:0;line-height:1.6">탈퇴하면 <b>계정과 고객 기록, 사진이 모두 바로 지워지고</b> 되돌릴 수 없어요. 필요한 사진은 먼저 갤러리에 저장해두세요.</p>
+    <label class="form-field">확인을 위해 비밀번호를 입력해주세요<input id="d-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password"></label>
+    <p id="d-err" class="auth__err" hidden></p>
+    <div class="row"><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="button" class="btn btn--primary" style="background:var(--danger);border-color:var(--danger)" id="d-go">탈퇴하고 모두 지우기</button></div>`,sh=>{
+    sh.querySelector('#d-go').addEventListener('click',async()=>{const err=m=>{const p=sh.querySelector('#d-err');p.textContent=m;p.hidden=false};
+      const accounts=(await DB.get('accounts'))||[];const a=accounts.find(x=>x.id===ACC.id);
+      if(!a||a.hash!==await pinHash(sh.querySelector('#d-pin').value,a.salt))return err('비밀번호가 맞지 않아요.');
+      clearTimeout(saveTimer);const id=ACC.id;ACC=null;
+      for(const c of S.clients){(c.history||[]).forEach(h=>DB.del('thumb:'+h.id));for(const k of ['before','after'])if(c[k].photo&&!c[k].photo.startsWith('sample:'))await DB.del('img:'+c[k].photo)}
+      await DB.del('state:'+id);await DB.set('accounts',accounts.filter(x=>x.id!==id));sess.set(null);
+      S={...S,clients:[],activeId:null};closeModal();authMode='signup';renderAuth();toast('탈퇴가 끝났어요. 모든 기록을 지웠어요')})});
+}
+async function exportCard(){
+  if(mode){mode=null;renderMain()}
+  try{await document.fonts.ready}catch(e){}
+  const cv=renderCard(isPro()?4/3:1);const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.94));const url=cv.toDataURL('image/jpeg',.94); // data URL: iPhone long-press "사진 앱에 저장" works reliably
+  const c=active();const fname=`bodylog_${(S.showName?c.name:maskName(c.name)).replace(/\*/g,'')}_${S.ratio==='916'?'9x16':'3x4'}.jpg`;
+  const warns=[];
+  if(!S.face)warns.push('얼굴 가림이 꺼져 있어 얼굴이 그대로 보입니다.');
+  else sides.forEach(([k,L])=>{if(c[k].photo&&!c[k].mask.length)warns.push(`${L} 사진에 얼굴 가림이 없습니다.`)});
+  S.exportCount=(S.exportCount||0)+1;markDirty();const showPromo=!isPro()&&S.exportCount%3===1;
+  if(!c.consent)warns.push('고객의 사진 공유 동의가 기록되지 않았습니다. 고객 정보에서 동의 여부를 체크해주세요.');
+  const isMob=/iPhone|iPad|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
+  modal(`<h3>공유 이미지</h3>${warns.length?`<div style="background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5"><b>공유 전에 확인하세요</b><br>${warns.map(esc).join('<br>')}</div>`:''}${isMob?`<p class="save-tip save-tip--main">👇 아래 사진을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img" src="${url}" alt="비포 애프터 공유 이미지">
+    ${showPromo?proPromo():''}
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${ic('share')}갤러리에 저장</button></div>`,sh=>{
+      sh.querySelector('#dl').addEventListener('click',async()=>{
+        const file=new File([blob],fname,{type:'image/jpeg'});
+        // 1) iPhone/Android share sheet → '이미지 저장' puts it straight into Photos (works on the app's own website)
+        try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
+        // 2) inside Claude: host save (iPhone Claude app opens the share sheet)
+        const dls=await getDownloads();
+        // when the button can't save here, point straight at the long-press way instead of a toast that covers the screen
+        const longPress=()=>{const t=sh.querySelector('.save-tip');if(!t)return;t.innerHTML="<b>여기서는 버튼 저장이 막혀 있어요.</b><br>위 사진을 <b>길게 누른 뒤 '사진 앱에 저장'</b>을 누르면 갤러리에 바로 들어가요.";t.classList.remove('is-flash');void t.offsetWidth;t.classList.add('is-flash');sh.querySelector('.export-img').scrollIntoView({behavior:'smooth',block:'center'})};
+        if(dls){try{await dls.save({filename:fname,data:blob});toast("공유 창이 뜨면 '이미지 저장'을 누르세요")}catch(e){if(!e||e.code!=='declined')longPress()}return}
+        // 3) desktop browsers
+        const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+        if(/iPhone|iPad|Android/i.test(navigator.userAgent))longPress();
+      });
+    });
+}
+
+/* ---------- backup / restore (one JSON file with every client, photo and saved record) ---------- */
+const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)});
+async function exportBackup(){
+  toast('백업 파일을 만드는 중이에요…');await persist();
+  const images={},thumbsOut={};
+  for(const c of S.clients){for(const k of ['before','after']){const id=c[k].photo;if(!id||id.startsWith('sample:')||images[id])continue;
+      const v=await DB.get('img:'+id);const bl=v instanceof Blob?v:v&&v.buf?new Blob([v.buf],{type:v.type||'image/jpeg'}):null;if(bl)images[id]=await blobToDataURL(bl)}
+    for(const h of c.history||[]){const t=thumbs[h.id]||await DB.get('thumb:'+h.id);if(t)thumbsOut[h.id]=t}}
+  const data=JSON.stringify({app:'bodylog',v:1,exportedAt:new Date().toISOString(),coach:S.coach,clients:S.clients,images,thumbs:thumbsOut});
+  const d=new Date(),fname=`bodylog_backup_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+  const blob=new Blob([data],{type:'application/json'});const file=new File([blob],fname,{type:'application/json'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const dls=await getDownloads();
+  if(dls){try{await dls.save({filename:fname,data:blob});toast(`고객 ${S.clients.length}명 백업 파일을 저장했어요`)}catch(e){if(!e||e.code!=='declined')toast('여기서는 파일 저장이 막혀 있어요. 사파리에서 claude.ai에 로그인하고 열어주세요')}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();a.remove();
+}
+async function importBackup(file){
+  let b;try{b=JSON.parse(await file.text())}catch(e){toast('백업 파일을 읽지 못했어요');return}
+  if(!b||b.app!=='bodylog'||!Array.isArray(b.clients)){toast('바디로그 백업 파일이 아니에요');return}
+  for(const [id,url] of Object.entries(b.images||{})){try{const bl=await (await fetch(url)).blob();await DB.set('img:'+id,{type:bl.type||'image/jpeg',buf:await bl.arrayBuffer()});delete photos[id]}catch(e){}}
+  for(const [id,t] of Object.entries(b.thumbs||{})){thumbs[id]=t;await DB.set('thumb:'+id,t)}
+  let added=0,updated=0;
+  for(const c of b.clients){const i=S.clients.findIndex(x=>x.id===c.id);if(i>=0){S.clients[i]=c;updated++}else{S.clients.push(c);added++}}
+  await Promise.all(S.clients.flatMap(c=>[ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)]));
+  await persist();closeModal();renderAll();toast(`백업을 불러왔어요 (새 고객 ${added}명, 덮어쓴 고객 ${updated}명)`);
+}
+let downloadsP=null; // resolved on first tap, so it also works when the viewer attaches window.claude after this script runs
+function getDownloads(){if(!downloadsP){try{downloadsP=(window.claude&&window.claude.use)?Promise.race([window.claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),4000))]).catch(()=>null):Promise.resolve(null)}catch(e){downloadsP=Promise.resolve(null)}}return downloadsP}
+/* ---------- toast ---------- */
+let tt;function toast(msg){const t=$('#toast');t.innerHTML=ic('check')+esc(msg);t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
+
+/* ---------- events ---------- */
+let uploadSide=null,inbodySide=null,inbodyVals=null;
+let sampleP=null;function getSample(){if(!sampleP){try{sampleP=(window.claude&&window.claude.use)?Promise.race([window.claude.use('sample'),new Promise(r=>setTimeout(()=>r(null),4000))]).catch(()=>null):Promise.resolve(null)}catch(e){sampleP=Promise.resolve(null)}}return sampleP}
+const numOk=v=>{const n=parseFloat(String(v??'').replace(/[^0-9.]/g,''));return isFinite(n)&&n>0?String(Math.round(n*10)/10):''};
+async function readInbody(file){
+  const sample=await getSample();
+  if(!sample){toast('이 화면에서는 자동 입력을 쓸 수 없어요. 수치를 직접 입력해주세요');return}
+  modal(`<h3>인바디 결과지 읽는 중…</h3><p style="margin:0;color:var(--muted);font-size:14px">숫자를 꼼꼼히 확인하고 있어요. 20~30초 정도 걸려요.</p>`);
+  try{
+    const url=URL.createObjectURL(file);const im=await loadImg(url);const k=Math.min(1,2600/Math.max(im.naturalWidth,im.naturalHeight));
+    const cv=mk(im.naturalWidth*k,im.naturalHeight*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
+    // the platform shrinks every image to ~1.2MP, which makes a whole result sheet's small digits unreadable,
+    // so send the full sheet for layout plus 2x2 zoomed tiles (each tile keeps ~4x the detail)
+    const jpg=c=>new Promise(r=>c.toBlob(r,'image/jpeg',.92));
+    let maxN=5;try{const L=await sample.limits();if(L&&L.images&&L.images.maxCount)maxN=Math.min(5,L.images.maxCount)}catch(e){}
+    const imgs=[await jpg(cv)];
+    if(maxN>=5){const W=cv.width,H=cv.height,ov=.08;
+      for(const [gx,gy] of [[0,0],[1,0],[0,1],[1,1]]){const x0=Math.max(0,(gx*.5-ov)*W),y0=Math.max(0,(gy*.5-ov)*H),w=Math.min(W-x0,(.5+ov*2)*W),h=Math.min(H-y0,(.5+ov*2)*H);
+        const t=mk(w,h);t.getContext('2d').drawImage(cv,x0,y0,w,h,0,0,w,h);imgs.push(await jpg(t))}}
+    const out=await sample.json(`인바디(InBody) 체성분 검사 결과지(종이 사진이거나 인바디 앱 화면 캡처)에서 숫자를 읽는 일입니다.
+${imgs.length>1?'1번 이미지는 전체 모습이고, 2~5번은 같은 사진을 왼쪽 위, 오른쪽 위, 왼쪽 아래, 오른쪽 아래로 나눠 확대한 것입니다. 작은 숫자는 확대한 이미지에서 정확히 읽으세요.':''}
+규칙:
+- 각 항목의 "측정값"(이 사람의 실제 수치)만 읽으세요. 괄호 안 표준범위(예: 55.3~74.8), 그래프 눈금 숫자(55 70 85 100 115 …), 목표값, 조절값은 측정값이 아닙니다.
+- 체중(kg)과 골격근량(kg)은 "골격근·지방 분석" 또는 "체성분 분석" 칸에 있습니다. 골격근량은 체중보다 작고 보통 체중의 30~50%입니다.
+- 체지방률(%)은 "비만 분석" 칸에 있고 보통 5~60 사이입니다. 체지방량(kg)과 헷갈리지 마세요.
+- 내장지방레벨은 보통 1~20 사이 정수이고 "내장지방레벨" 칸에 있습니다. 없으면 null.
+- 검사 일시는 결과지 위쪽(ID, 키, 나이 옆)에 있습니다.
+- 확실히 읽을 수 없는 값은 지어내지 말고 null로 두세요.
+JSON 하나로만 답하세요. 단위 없이 숫자만:
+{"is_inbody": true/false, "date": "YYYY-MM-DD", "weight": 체중, "fat_percent": 체지방률, "muscle": 골격근량, "visceral": 내장지방레벨}`,{images:imgs,modelTier:'complex'});
+    if(!out||out.is_inbody===false){closeModal();toast('인바디 결과지를 찾지 못했어요. 결과지가 잘 보이는 사진을 골라주세요');return}
+    inbodyVals={side:inbodySide,date:/^\d{4}-\d{2}-\d{2}$/.test(out.date||'')?out.date:'',weight:numOk(out.weight),fat:numOk(out.fat_percent),muscle:numOk(out.muscle),visceral:numOk(out.visceral)};
+    {const v=inbodyVals,w=+v.weight;if(w&&(w<20||w>300))v.weight='';if(+v.fat&&(+v.fat<2||+v.fat>70))v.fat='';if(+v.muscle&&(+v.muscle<5||(+v.weight&&+v.muscle>=+v.weight*.7)))v.muscle='';if(+v.visceral&&(+v.visceral>30||+v.visceral%1))v.visceral=''}
+    const v=inbodyVals,row=(l,x,u)=>`<tr><td>${l}</td><td class="num" style="text-align:right">${x?esc(x)+' '+u:'<span style="color:var(--muted)">못 읽음</span>'}</td></tr>`;
+    modal(`<h3>${v.side.toUpperCase()}에 이렇게 입력할까요?</h3><table class="mtable" style="min-width:0"><tbody>${row('측정일',v.date,'')}${row('체중',v.weight,'kg')}${row('체지방률',v.fat,'%')}${row('골격근량',v.muscle,'kg')}${row('내장지방',v.visceral,'레벨')}</tbody></table>
+      <p style="margin:0;color:var(--muted);font-size:12.5px">결과지와 숫자가 맞는지 한 번 확인해주세요. 입력 후에도 직접 고칠 수 있어요.</p>
+      <div class="row"><button type="button" class="btn btn--line" data-act="close">취소</button><button type="button" class="btn btn--primary" data-act="inbody-apply">입력하기</button></div>`);
+  }catch(e){closeModal();toast(e&&e.code==='not_granted'?'Claude 사용을 허용해야 자동 입력이 돼요':e&&e.code==='rate_limited'?'잠시 후 다시 시도해주세요':'결과지를 읽지 못했어요. 수치를 직접 입력해주세요')}
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;const c=active();
+  if(act==='close-overlay'){if(e.target===b)closeModal();return}
+  switch(act){
+    case 'add-client':closeModal();clientForm(null);break;
+    case 'edit-client':clientForm(c);break;
+    case 'clients':clientsSheet();break;
+    case 'pick':S.activeId=b.dataset.id;mode=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
+    case 'close':closeModal();break;
+    case 'ask-delete':document.getElementById('delConfirm').hidden=false;break;
+    case 'cancel-delete':document.getElementById('delConfirm').hidden=true;break;
+    case 'pin-change':pinChangeForm();break;
+    case 'backup':exportBackup();break;
+    case 'restore':$('#backupInput').value='';$('#backupInput').click();break;
+    case 'acct-delete':deleteAccountForm();break;
+    case 'confirm-delete':{const name=c.name;(c.history||[]).forEach(h=>DB.del('thumb:'+h.id));for(const k of ['before','after'])if(c[k].photo&&!c[k].photo.startsWith('sample:'))DB.del('img:'+c[k].photo);
+      S.clients=S.clients.filter(x=>x.id!==c.id);S.activeId=S.clients[0]?.id||null;mode=null;closeModal();await persist();renderAll();toast(`${name} 고객을 삭제했습니다`);break}
+    case 'save':{if(mode)mode=null;try{await document.fonts.ready}catch(e){}
+      const thumb=renderCard(.36).toDataURL('image/jpeg',.82);
+      const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral}};
+      thumbs[snap.id]=thumb;await DB.set('thumb:'+snap.id,thumb);delete snap.thumb;
+      const drop=(c.history||[]).slice(29);drop.forEach(h=>{DB.del('thumb:'+h.id);delete thumbs[h.id]});
+      c.history=[snap,...(c.history||[])].slice(0,30);touch(c);
+      // after saving, clear the screen for the next client; everything stays in this client's file and comes back from 고객 목록
+      S.activeId=null;query='';const ok=await persist();renderAll();window.scrollTo(0,0);
+      toast(ok?`${c.name} 고객 파일에 저장했습니다. 고객 목록에서 다시 불러올 수 있어요`:'이 브라우저에서는 저장할 수 없습니다');break}
+    case 'snap':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)snapModal(c,sn);break}
+    case 'snap-del':{DB.del('thumb:'+b.dataset.id);delete thumbs[b.dataset.id];c.history=(c.history||[]).filter(x=>x.id!==b.dataset.id);touch(c);await persist();closeModal();renderMain();toast('저장 기록을 삭제했습니다');break}
+    case 'face':S.face=!S.face;markDirty();renderMain();toast(S.face?'얼굴 가림을 켰습니다':'얼굴 가림을 껐습니다');break;
+    case 'mode-adjust':case 'mode-mask':case 'mode-text':{const kind=act==='mode-adjust'?'adjust':act==='mode-text'?'text':'mask';
+      if(mode&&mode.kind===kind){mode=null}else{const side=mode?mode.side:(c.before.photo?'before':'after');if(!c[side].photo&&!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}mode={kind,side:c[side].photo?side:(side==='before'?'after':'before')};if(kind==='mask'&&!S.face){S.face=true;markDirty()}}
+      renderMain();break}
+    case 'side':mode.side=b.dataset.side;renderMain();break;
+    case 'done':mode=null;await persist();renderMain();break;
+    case 'ghost':ghost=!ghost;renderToolsOnly();drawAll();break;
+    case 'reset-tf':c[mode.side].tf={s:1,x:0,y:0};touch(c);syncZoom(c[mode.side]);drawAll();break;
+    case 'undo':strokesOf(c[mode.side]).pop();touch(c);renderToolsOnly();drawAll();break;
+    case 'clear-mask':strokesOf(c[mode.side]).length=0;touch(c);renderToolsOnly();drawAll();break;
+    case 'upload':uploadSide=b.dataset.side;$('#fileInput').value='';$('#fileInput').click();break;
+    case 'ratio':S.ratio=b.dataset.v;markDirty();document.querySelectorAll('[data-act="ratio"]').forEach(x=>x.classList.toggle('is-on',x.dataset.v===S.ratio));drawPreview();break;
+    case 'opt-name':S.showName=!S.showName;markDirty();renderMain();break;
+    case 'opt-nums':S.showNums=!S.showNums;markDirty();renderMain();break;
+    case 'export':exportCard();break;
+    case 'premium':premiumSheet();break;
+    case 'pro-on':S.plan='premium';markDirty();premiumSheet();renderMain();toast('프리미엄을 미리 써보는 중이에요');break;
+    case 'pro-off':S.plan='free';markDirty();closeModal();renderMain();toast('무료 버전으로 돌아왔어요');break;
+    case 'inbody':modal(`<h3>인바디 결과지로 자동 입력</h3><p style="margin:0;color:var(--muted);font-size:14px">갤러리의 인바디 결과지 사진을 고르면 체중·체지방률·골격근량·측정일을 읽어서 채워드려요. 어느 쪽 기록에 넣을까요?</p>
+      <div class="lseg"><button type="button" data-act="inbody-pick" data-side="before">BEFORE<small>처음 기록</small></button><button type="button" data-act="inbody-pick" data-side="after">AFTER<small>최근 기록</small></button></div>
+      <p style="margin:0;color:var(--muted);font-size:12px">사진은 숫자를 읽기 위해 Claude에게 전송되고, 이 앱에 따로 저장되지 않아요.</p>
+      <div class="row"><button type="button" class="btn btn--line" data-act="close">취소</button></div>`);break;
+    case 'inbody-pick':inbodySide=b.dataset.side;closeModal();$('#inbodyInput').value='';$('#inbodyInput').click();break;
+    case 'inbody-apply':{const v=inbodyVals;if(!v)break;const r=c[v.side];['date','weight','fat','muscle','visceral'].forEach(f=>{if(v[f])r[f]=v[f]});touch(c);await persist();closeModal();renderMain();toast(`${v.side.toUpperCase()} 수치를 입력했습니다`);break}
+    case 'auto-align':{if(!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}
+      mode=null;['before','after'].forEach(k=>{if(!c[k].pose)c[k].poseTried=false});await runAuto(c);break}
+  }
+});
+$('#coachBtn').addEventListener('click',coachForm);
+$('#backupInput').addEventListener('change',e=>{const f=e.target.files[0];if(f)importBackup(f)});
+$('#inbodyInput').addEventListener('change',e=>{const f=e.target.files[0];if(f&&active()&&inbodySide)readInbody(f)});
+$('#fileInput').addEventListener('change',async e=>{
+  const f=e.target.files[0];const c=active();if(!f||!c||!uploadSide)return;
+  try{const old=c[uploadSide].photo;const id=await importFile(f);
+    if(old&&!old.startsWith('sample:'))DB.del('img:'+old);
+    c[uploadSide]={...c[uploadSide],photo:id,tf:{s:1,x:0,y:0},mask:[],erase:[],pose:null,poseTried:false};
+    if(!c[uploadSide].date)c[uploadSide].date=new Date().toISOString().slice(0,10);
+    touch(c);await persist();renderMain();
+    await runAuto(c);
+  }catch(err){toast('사진을 불러오지 못했습니다. JPG나 PNG 파일을 선택해주세요')}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;const c=active();
+  if(t.id==='search'){query=t.value;const hit=findByPhone(query);if(hit&&hit.id!==S.activeId){S.activeId=hit.id;mode=null;markDirty();renderAll();toast(`${hit.name} 고객 기록을 불러왔습니다`)}else renderRail();return}
+  if(t.id==='zoom'&&mode){c[mode.side].tf.s=t.value/100;$('#zoomOut').textContent=t.value+'%';drawFrame(mode.side);touch(c);drawPreviewSoon();return}
+  if(t.id==='brush'){brush=t.value/100;$('#brushOut').textContent=Math.round(t.value);return}
+  if(t.dataset.field&&c){
+    if(t.dataset.field==='memo'){c.memo=t.value}
+    else{const k=t.dataset.side,f=t.dataset.field;c[k][f]=f==='date'?t.value:t.value.replace(/[^0-9.]/g,'');
+      if(f!=='date'){const m=METRICS.find(x=>x[0]===f);const cell=document.querySelector(`[data-delta="${f}"]`);if(cell)cell.innerHTML=deltaCell(c.before[f],c.after[f],m[4],m[3])}}
+    touch(c);drawPreviewSoon();
+  }
+});
+document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.field==='date')renderMain()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,80)});
+
+function renderAll(){
+  $('#coachName').textContent=S.coach;$('#coachAv').textContent=initials(S.coach);
+  renderRail();renderMain();
+}
+
+/* ---------- boot ---------- */
+async function openAccount(acc,{coachName}={}){
+  ACC=acc;S={coach:'코치',club:'핏코치',plan:'free',wmText:'',wmOff:false,activeId:null,face:true,ratio:'916',showName:false,showNums:true,clients:[]};mode=null;query='';
+  let saved=null;try{const raw=await DB.get('state:'+acc.id);if(raw)saved=JSON.parse(raw)}catch(e){}
+  if(saved&&Array.isArray(saved.clients))S={...S,...saved};
+  else{const sm=makeSample();S.clients=[sm];S.activeId=sm.id;S.coach=coachName||'코치';await persist()}
+  if(S.activeId&&!active())S.activeId=null;
+  await Promise.all(S.clients.flatMap(c=>[ensurePhoto(c.before.photo),ensurePhoto(c.after.photo),...(c.history||[]).map(async h=>{if(!h.thumb){const t=await DB.get('thumb:'+h.id);if(t)thumbs[h.id]=t}})]));
+  $('#auth').hidden=true;document.body.classList.remove('locked');
+  renderAll();
+  try{await document.fonts.ready;drawAll()}catch(e){}
+}
+
+/* ---------- coach sign-up / login (this device; swap for a server later) ---------- */
+const emailOk=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+async function pinHash(pin,salt){
+  const data=new TextEncoder().encode(salt+':'+pin);
+  try{const h=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+  catch(e){let h=2166136261;for(const b of data){h^=b;h=Math.imul(h,16777619)>>>0}return 'f'+h.toString(16)}
+}
+const sess={get(){try{return localStorage.getItem('bodylog.session')}catch(e){return null}},set(v){try{v?localStorage.setItem('bodylog.session',v):localStorage.removeItem('bodylog.session')}catch(e){}v?DB.set('session',v):DB.del('session')}}; // kept in both places so in-app browsers that clear one still stay logged in
+let authMode='login',fails=0,lockUntil=0;
+const TERMS=`<p><b>1. 저장하는 정보</b><br>코치 이메일, 고객 이름·전화번호, 비포·애프터 사진, 체중·체지방률·골격근량 등 인바디 기록, 메모.</p>
+<p><b>2. 저장 위치</b><br>지금은 이 휴대폰(브라우저) 안에만 저장되고, 회사 서버로 보내지지 않아요.</p>
+<p><b>3. 고객 동의</b><br>사진과 인바디 기록은 건강 관련 정보예요. 코치는 기록하기 전에 고객 본인의 동의를 받아야 하고, 공유할 때는 얼굴 가림을 쓰고 동의한 범위에서만 써주세요.</p>
+<p><b>4. 보관과 삭제</b><br>회원 탈퇴를 하면 계정과 고객 기록·사진이 모두 바로 지워지고 되돌릴 수 없어요.</p>
+<p><b>5. 이용 제한</b><br>만 14세 미만은 가입할 수 없어요. 다른 사람의 사진을 동의 없이 올리거나 퍼뜨리면 안 돼요.</p>
+<p><b>6. 운영자</b><br>피다다이어트(PA다이어트) · 대표 한효정 · 사업자등록번호 517-14-01969<br>충청남도 서산시 예천4로 48-12</p>`;
+function renderAuth(msg=''){
+  const su=authMode==='signup',rs=authMode==='reset';
+  $('#auth').innerHTML=`<div class="auth__card">
+    <div class="brand"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><div><b>BODYLOG</b><small>코치 전용 비포·애프터 기록</small></div></div>
+    <div class="lseg" role="tablist"><button type="button" data-auth="login" class="${su?'':'is-on'}">로그인</button><button type="button" data-auth="signup" class="${su?'is-on':''}">회원가입</button></div>
+    <form id="authForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+      <label class="form-field">이메일 (아이디)<input id="a-email" type="email" inputmode="email" autocomplete="username" placeholder="coach@example.com"></label>
+      ${rs?'<p class="auth__note" style="text-align:left">가입한 이메일과 새 비밀번호를 넣으면 비밀번호가 바뀌어요. 고객 기록은 그대로 남아요.</p>':''}
+      <label class="form-field">${rs?'새 비밀번호':'비밀번호'} (숫자 6자리)<input id="a-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="${su||rs?'new-password':'current-password'}" placeholder="••••••"></label>
+      ${rs?`<label class="form-field">새 비밀번호 확인<input id="a-pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••••"></label>`:''}
+      ${su?`<label class="form-field">비밀번호 확인<input id="a-pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••••"></label>
+      <label class="form-field">코치 이름<input id="a-name" maxlength="20" placeholder="예: 한코치"></label>
+      <label class="agree"><input id="a-agree" type="checkbox"><span><b>[필수]</b> 이용약관과 개인정보 처리에 동의해요</span></label>
+      <details class="terms"><summary>내용 보기</summary>${TERMS}</details>`:''}
+      <p id="a-err" class="auth__err" ${msg?'':'hidden'}>${esc(msg)}</p>
+      <button type="submit" class="btn btn--primary" style="width:100%;height:48px">${rs?'비밀번호 바꾸고 로그인':su?'가입하고 시작하기':'로그인'}</button>
+      ${su?'':`<button type="button" class="auth__demo" style="font-weight:500;color:var(--muted);text-decoration:underline" data-auth="${rs?'login':'reset'}">${rs?'로그인으로 돌아가기':'비밀번호를 잊으셨나요?'}</button>`}
+    </form>
+    ${/KAKAOTALK|NAVER\(|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent)?`<p class="auth__err" style="background:var(--danger-soft);border-radius:12px;padding:10px 12px;line-height:1.55"><b>카톡 안에서 열면 창을 닫을 때 계정과 고객 기록이 지워질 수 있어요.</b><br>아래 오른쪽 공유 버튼(↑)을 눌러 <b>'Safari로 열기'</b>(갤럭시는 '다른 브라우저로 열기')를 눌러 사용해주세요.</p>`:''}
+    <button type="button" class="auth__demo" data-auth="demo">가입 없이 둘러보기</button>
+    <p class="auth__note">지금은 이 휴대폰(브라우저)에만 계정과 고객 기록이 저장돼요. 고객 사진은 외부로 전송되지 않습니다.</p>
+  </div>`;
+  $('#auth').hidden=false;document.body.classList.add('locked');
+  $('#a-email').value=$('#a-email').value||'';
+  document.querySelectorAll('#auth [inputmode=numeric]').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/\D/g,'').slice(0,6)}));
+  $('#authForm').addEventListener('submit',onAuth);
+}
+async function onAuth(e){
+  e.preventDefault();const err=m=>{const p=$('#a-err');p.textContent=m;p.hidden=false};
+  const email=$('#a-email').value.trim().toLowerCase(),pin=$('#a-pin').value;
+  if(!emailOk(email))return err('이메일 주소를 정확히 입력해주세요.');
+  if(!/^\d{6}$/.test(pin))return err('비밀번호는 숫자 6자리로 입력해주세요.');
+  const accounts=(await DB.get('accounts'))||[];
+  const weak=/^(\d)\1{5}$/.test(pin)||'0123456789'.includes(pin)||'9876543210'.includes(pin);
+  const noAcc='이 휴대폰(브라우저)에는 이 이메일로 가입된 계정이 없어요. 카카오톡 안에서 연 것과 사파리에서 연 것은 따로 저장되니, 가입했던 곳에서 열어주세요.';
+  if(authMode==='reset'){
+    const a=accounts.find(x=>x.email===email);if(!a)return err(noAcc);
+    if(pin!==$('#a-pin2').value)return err('새 비밀번호 확인이 일치하지 않습니다.');
+    if(weak)return err('111111, 123456 같은 쉬운 번호는 쓸 수 없어요.');
+    a.salt=uid()+uid();a.hash=await pinHash(pin,a.salt);await DB.set('accounts',accounts);
+    fails=0;lockUntil=0;authMode='login';sess.set(a.id);await openAccount({id:a.id,email:a.email});toast('비밀번호를 바꿨어요');return;
+  }
+  if(authMode==='signup'){
+    if(pin!==$('#a-pin2').value)return err('비밀번호 확인이 일치하지 않습니다.');
+    if(weak)return err('111111, 123456 같은 쉬운 번호는 쓸 수 없어요.');
+    if(!$('#a-agree').checked)return err('이용약관과 개인정보 처리에 동의해주세요.');
+    if(accounts.some(a=>a.email===email))return err('이미 가입된 이메일입니다. 로그인해주세요.');
+    const salt=uid()+uid(),acc={id:'c'+uid(),email,salt,hash:await pinHash(pin,salt),createdAt:Date.now(),agreedAt:Date.now()};
+    accounts.push(acc);await DB.set('accounts',accounts);
+    // first account on this device keeps the records made before sign-up existed
+    const legacy=await DB.get('state');if(legacy&&accounts.length===1){await DB.set('state:'+acc.id,legacy);await DB.del('state')}
+    sess.set(acc.id);await openAccount({id:acc.id,email},{coachName:$('#a-name').value.trim()});toast('가입을 환영합니다');return;
+  }
+  if(Date.now()<lockUntil)return err(`잠시 후 다시 시도해주세요 (${Math.ceil((lockUntil-Date.now())/1000)}초).`);
+  const acc=accounts.find(a=>a.email===email);
+  if(!acc)return err(noAcc);
+  if(acc.hash!==await pinHash(pin,acc.salt)){fails++;if(fails>=5){lockUntil=Date.now()+30000;fails=0}return err('이메일 또는 비밀번호가 맞지 않습니다.')}
+  fails=0;sess.set(acc.id);await openAccount({id:acc.id,email:acc.email});
+}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-auth]');if(!b)return;
+  if(b.dataset.auth==='demo'){sess.set('demo');await openAccount({id:'demo',email:'',demo:true},{coachName:'코치'});toast('둘러보기 모드예요. 기록은 이 기기에만 남아요');return}
+  authMode=b.dataset.auth;renderAuth()});
+async function logout(){await persist();sess.set(null);ACC=null;closeModal();renderAuth()}
+
+(()=>{const sp=$('#splash');if(!sp)return;let done=false;const out=()=>{if(done)return;done=true;sp.classList.add('is-out');setTimeout(()=>sp.remove(),500)};
+  sp.addEventListener('click',out);setTimeout(out,1800)})();
+(async()=>{
+  await DB.open();
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  const sid=sess.get()||await DB.get('session');
+  if(sid==='demo')return openAccount({id:'demo',email:'',demo:true},{coachName:'코치'});
+  const accounts=(await DB.get('accounts'))||[];const acc=sid&&accounts.find(a=>a.id===sid);
+  if(acc)return openAccount({id:acc.id,email:acc.email});
+  authMode=accounts.length?'login':'signup';renderAuth();
+})();
+})();
+</script>
+</body></html>
