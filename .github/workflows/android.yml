@@ -10,6 +10,9 @@ on:
       - app/**
       - .github/workflows/android.yml
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,3 +46,18 @@ jobs:
           path: |
             app/android/app/build/outputs/bundle/release/*.aab
             app/android/app/build/outputs/apk/debug/*.apk
+      - name: 만든 파일을 android-builds 브랜치에 보관
+        working-directory: .
+        run: |
+          mkdir -p /tmp/out
+          cp app/android/app/build/outputs/bundle/release/*.aab /tmp/out/bodylog-unsigned.aab
+          cp app/android/app/build/outputs/apk/debug/*.apk /tmp/out/bodylog-debug.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan android-builds
+          git rm -rfq .
+          cp /tmp/out/* .
+          echo "${GITHUB_SHA}" > source-commit.txt
+          git add bodylog-unsigned.aab bodylog-debug.apk source-commit.txt
+          git commit -qm "빌드 ${GITHUB_SHA::7}"
+          git push -f origin android-builds
