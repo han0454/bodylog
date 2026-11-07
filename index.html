@@ -724,8 +724,11 @@ function watermark(x,rx,by,k=1){
   x.fillStyle='#7E8995';rr(x,mx+mk2*.24,my+mk2*.28,mk2*.2,mk2*.5,2);x.fill();x.fillStyle='#35C8AF';rr(x,mx+mk2*.54,my+mk2*.46,mk2*.2,mk2*.32,2);x.fill();
   x.fillStyle='#fff';x.textBaseline='middle';x.fillText('BODYLOG',mx+mk2+Math.round(8*k),Y+h/2+1);x.restore();
 }
+let pvCanvas=null;
 function renderCard(scale=1){
-  const c=active();const W=1080,H=S.ratio==='916'?1920:1440;const cv=mk(W*scale,H*scale),x=cv.getContext('2d');x.scale(scale,scale);
+  const c=active();const W=1080,H=S.ratio==='916'?1920:1440;
+  let cv;if(scale===.3){const w=Math.round(W*scale),h=Math.round(H*scale);if(!pvCanvas||pvCanvas.width!==w||pvCanvas.height!==h)pvCanvas=mk(w,h);cv=pvCanvas;cv.getContext('2d').setTransform(1,0,0,1,0,0);cv.getContext('2d').clearRect(0,0,w,h)}else cv=mk(W*scale,H*scale);
+  const x=cv.getContext('2d');x.scale(scale,scale);
   const ink='#F1F4F3',mut='#8C979E',acc='#35C8AF',bg='#111416';
   x.fillStyle=bg;x.fillRect(0,0,W,H);
   const tall=S.ratio==='916',M=56,gap=18,pw=(W-M*2-gap)/2,ph34=pw*4/3;let ph=ph34;
@@ -990,7 +993,7 @@ async function importBackup(file){
   for(const [id,t] of Object.entries(b.thumbs||{})){thumbs[id]=t;await DB.set('thumb:'+id,t)}
   let added=0,updated=0;
   for(const c of b.clients){const i=S.clients.findIndex(x=>x.id===c.id);if(i>=0){S.clients[i]=c;updated++}else{S.clients.push(c);added++}}
-  await Promise.all(S.clients.flatMap(c=>[ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)]));
+  {const c=active();if(c)await Promise.all([ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)])}
   await persist();closeModal();renderAll();toast(`백업을 불러왔어요 (새 고객 ${added}명, 덮어쓴 고객 ${updated}명)`);
 }
 let downloadsP=null; // resolved on first tap, so it also works when the viewer attaches window.claude after this script runs
@@ -1120,9 +1123,20 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.field==='date')renderMain()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+const flushSave=()=>{if(ACC&&saveTimer){persist()}};document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave()});window.addEventListener('pagehide',flushSave);
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,80)});
 
+const freeCanvas=cv=>{if(cv&&cv.tagName==='CANVAS'){cv.width=0;cv.height=0}};
+function freePhoto(id){const p=photos[id];if(p)freeCanvas(p.el);delete photos[id];const m=smudges[id];if(m){freeCanvas(m.base);freeCanvas(m.mask);freeCanvas(m.comp)}delete smudges[id];const e=erases[id];if(e)freeCanvas(e.out);delete erases[id]}
+let photoGen=0;
+function syncPhotos(){
+  const c=active(),keep=new Set(c?[c.before.photo,c.after.photo].filter(Boolean):[]);
+  for(const id of Object.keys(photos))if(!keep.has(id))freePhoto(id);
+  const need=[...keep].filter(id=>!photos[id]);
+  if(need.length){const g=++photoGen;Promise.all(need.map(ensurePhoto)).then(()=>{if(g===photoGen&&active()===c)renderMain()})}
+}
 function renderAll(){
+  syncPhotos();
   $('#coachName').textContent=S.coach;$('#coachAv').textContent=initials(S.coach);
   renderRail();renderMain();
 }
@@ -1134,7 +1148,8 @@ async function openAccount(acc,{coachName}={}){
   if(saved&&Array.isArray(saved.clients))S={...S,...saved};
   else{const sm=makeSample();S.clients=[sm];S.activeId=sm.id;S.coach=coachName||'코치';await persist()}
   if(S.activeId&&!active())S.activeId=null;
-  await Promise.all(S.clients.flatMap(c=>[ensurePhoto(c.before.photo),ensurePhoto(c.after.photo),...(c.history||[]).map(async h=>{if(!h.thumb){const t=await DB.get('thumb:'+h.id);if(t)thumbs[h.id]=t}})]));
+  {const c=active();if(c)await Promise.all([ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)])}
+  await Promise.all(S.clients.flatMap(c=>[...(c.history||[]).map(async h=>{if(!h.thumb){const t=await DB.get('thumb:'+h.id);if(t)thumbs[h.id]=t}})]));
   $('#auth').hidden=true;document.body.classList.remove('locked');
   renderAll();
   try{await document.fonts.ready;drawAll()}catch(e){}
