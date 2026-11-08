@@ -115,6 +115,12 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .stage{background:var(--stage);color:var(--stage-ink);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
 .stage__bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stage__bar .grow{flex:1}
+.stage__bar--grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stage__bar--grid .chip{justify-content:center;padding:0 8px;white-space:nowrap}
+.bgopts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bgopt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 4px 8px;border-radius:12px;border:1.5px solid var(--stage-line);background:var(--stage-2);color:var(--stage-ink);font-size:12px;font-weight:600}
+.bgopt.is-on{border-color:var(--stage-accent);box-shadow:0 0 0 2px rgba(0,0,0,.2) inset}
+.bgopt canvas{width:100%;aspect-ratio:3/4;border-radius:8px;display:block}
 .chip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;background:var(--stage-2);border:1px solid var(--stage-line);font-size:13.5px;font-weight:600;color:var(--stage-ink)}
 .chip:hover{border-color:#3d454b}
 .chip.is-on{background:var(--stage-ink);color:var(--stage);border-color:transparent}
@@ -303,6 +309,7 @@ body.locked{overflow:hidden}
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></symbol>
   <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
   <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-bg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" opacity=".55"/></symbol>
   <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 20h6M12 5v15"/></symbol>
   <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></symbol>
   <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
@@ -604,13 +611,85 @@ function findTextStrokes(rec){
     for(let x=a;;x+=r*.6){st.push([Math.min(x,b),yc,r]);if(x>=b)break}return st});
 }
 
+/* ---------- background swap: person mask from the pose model, then a clean backdrop behind ---------- */
+const BGS=[['none','원본'],['white','화이트'],['color','컬러'],['grid','눈금']];
+const personMasks={},cutCache={},segPending={};
+function paintBg(x,W,H,v){
+  x.save();
+  if(v==='white'){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#ffffff');g.addColorStop(.78,'#f1f0ed');g.addColorStop(1,'#e4e2de');x.fillStyle=g;x.fillRect(0,0,W,H);
+    const r=x.createRadialGradient(W/2,H*.93,0,W/2,H*.93,W*.45);r.addColorStop(0,'rgba(0,0,0,.10)');r.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=r;x.fillRect(0,H*.8,W,H*.2)}
+  else if(v==='color'){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#e6efea');g.addColorStop(1,'#bcd3c8');x.fillStyle=g;x.fillRect(0,0,W,H);
+    const r=x.createRadialGradient(W/2,H*.38,0,W/2,H*.38,W*.75);r.addColorStop(0,'rgba(255,255,255,.55)');r.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=r;x.fillRect(0,0,W,H)}
+  else if(v==='grid'){x.fillStyle='#f4f5f3';x.fillRect(0,0,W,H);const c=W/16,rw=W*.1;
+    x.lineWidth=Math.max(.5,W/700);
+    for(let i=0;i*c<=H+1;i++){const y=H-i*c;x.strokeStyle=i%4?'rgba(30,60,50,.10)':'rgba(30,60,50,.28)';x.beginPath();x.moveTo(rw,y);x.lineTo(W,y);x.stroke()}
+    for(let j=0;rw+j*c<=W+1;j++){const X=rw+j*c;x.strokeStyle=j%4?'rgba(30,60,50,.10)':'rgba(30,60,50,.28)';x.beginPath();x.moveTo(X,0);x.lineTo(X,H);x.stroke()}
+    x.fillStyle='#ffffff';x.fillRect(0,0,rw,H);x.strokeStyle='rgba(30,60,50,.45)';x.beginPath();x.moveTo(rw,0);x.lineTo(rw,H);x.stroke();
+    x.fillStyle='#2f5d50';x.textAlign='left';x.textBaseline='middle';x.font=`700 ${Math.max(6,W*.032)}px system-ui,sans-serif`;
+    for(let i=0;i*c/2<=H+1;i++){const y=H-i*c/2,big=i%8===0;x.strokeStyle='rgba(30,60,50,.55)';x.beginPath();x.moveTo(rw,y);x.lineTo(rw-(big?rw*.45:i%2?rw*.18:rw*.3),y);x.stroke();
+      if(big&&i>0&&y>W*.04)x.fillText(String(i*5),W*.008,y)}}
+  x.restore();
+}
+function getSeg(){
+  if(getSeg.p)return getSeg.p;
+  getSeg.p=(async()=>{
+    const V=await import(`${MPCDN}/vision_bundle.mjs`);const rel=p=>new URL(p,location.href).href;
+    const tries=[
+      [{wasmLoaderPath:rel('mp/vision_wasm_internal.js'),wasmBinaryPath:rel('mp/vision_wasm_internal.wasm')},rel('mp/selfie_segmenter.tflite')],
+      [{wasmLoaderPath:`${MPCDN}/wasm/vision_wasm_internal.js`,wasmBinaryPath:`${MPCDN}/wasm/vision_wasm_internal.wasm`},'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite']];
+    for(const [w,m] of tries){try{return await V.ImageSegmenter.createFromOptions(w,{baseOptions:{modelAssetPath:m,delegate:'CPU'},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false})}catch(e){console.warn('seg load',e)}}
+    throw new Error('seg unavailable');
+  })();
+  getSeg.p.catch(()=>{getSeg.p=null});return getSeg.p;
+}
+async function loadPersonMask(id){
+  if(!id||personMasks[id])return personMasks[id]||null;
+  const saved=await DB.get('seg:'+id);
+  if(saved){try{const im=await loadImg(saved);const c=mk(im.naturalWidth,im.naturalHeight);c.getContext('2d').drawImage(im,0,0);personMasks[id]=c;return c}catch(e){}}
+  const ph=await ensurePhoto(id);if(!ph)return null;
+  const lm=await getSeg();let out=null;
+  lm.segment(ph.el,res=>{const m=res.confidenceMasks&&res.confidenceMasks[0];if(!m)return;
+    const w=m.width,h=m.height,f=m.getAsFloat32Array(),c=mk(w,h),cx=c.getContext('2d'),d=cx.createImageData(w,h);
+    for(let i=0;i<w*h;i++){const a=Math.min(1,Math.max(0,(f[i]-.35)/.3));d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=0;d.data[i*4+3]=a*255}
+    cx.putImageData(d,0,0);out=c});
+  if(!out)return null;
+  // soften the outline a little
+  const soft=mk(out.width,out.height),sx=soft.getContext('2d');sx.filter=`blur(${Math.max(1,out.width/500)}px)`;sx.drawImage(out,0,0);if(sx.filter==='none')sx.drawImage(out,0,0);
+  freeCanvas(out);personMasks[id]=soft;
+  try{DB.set('seg:'+id,soft.toDataURL('image/png'))}catch(e){}
+  return soft;
+}
+function cutFor(rec){
+  const id=rec.photo,ph=photos[id],m=personMasks[id];if(!ph||!m)return null;
+  const sig=(rec.erase?rec.erase.length:0)+':'+(rec.erase?flatStamps(rec.erase).length:0);
+  let c=cutCache[id];if(c&&c.sig===sig&&c.rec===rec)return c.out;
+  const k=Math.min(1,1400/Math.max(ph.w,ph.h)),w=Math.round(ph.w*k),h=Math.round(ph.h*k);
+  const out=c&&c.out&&c.out.width===w?c.out:mk(w,h),x=out.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,w,h);
+  x.imageSmoothingQuality='high';x.drawImage(ph.el,0,0,w,h);
+  if(rec.erase&&rec.erase.length){const ef=eraseFor(id,rec);if(ef)x.drawImage(ef,0,0,w,h)}
+  x.globalCompositeOperation='destination-in';x.drawImage(m,0,0,w,h);x.globalCompositeOperation='source-over';
+  cutCache[id]={sig,rec,out};return out;
+}
+function wantMask(rec){
+  const id=rec.photo;if(!id||personMasks[id]||segPending[id])return;
+  segPending[id]=loadPersonMask(id).catch(()=>null).then(m=>{delete segPending[id];if(m)drawAll()});
+}
+function drawBgThumbs(){document.querySelectorAll('[data-bgthumb]').forEach(cv=>{const x=cv.getContext('2d'),v=cv.dataset.bgthumb;
+  const c=active(),rec=c&&(c.after.photo?c.after:c.before);
+  x.clearRect(0,0,90,120);
+  if(v==='none'){if(rec&&photos[rec.photo]){const ph=photos[rec.photo],L=layoutOf(rec,ph,90,120);x.drawImage(ph.el,L.dx,L.dy,L.dw,L.dh)}else{x.fillStyle='#888';x.fillRect(0,0,90,120)}return}
+  paintBg(x,90,120,v);if(rec&&photos[rec.photo]&&personMasks[rec.photo]){const cut=cutFor(rec),L=layoutOf(rec,photos[rec.photo],90,120);if(cut)x.drawImage(cut,L.dx,L.dy,L.dw,L.dh)}})}
+
 /* ---------- drawing a record into a fixed 3:4 box (frame never moves; only the photo inside does) ---------- */
 function layoutOf(rec,ph,W,H){const base=Math.max(W/ph.w,H/ph.h),sc=base*rec.tf.s,dw=ph.w*sc,dh=ph.h*sc;return{sc,dw,dh,dx:(W-dw)/2+rec.tf.x*W,dy:(H-dh)/2+rec.tf.y*H}}
 function drawRec(x,rec,W,H,face,alpha=1){
   const ph=rec.photo&&photos[rec.photo];if(!ph)return null;
   const L=layoutOf(rec,ph,W,H);
-  x.save();x.globalAlpha=alpha;x.imageSmoothingQuality='high';x.drawImage(ph.el,L.dx,L.dy,L.dw,L.dh);
-  if(rec.erase&&rec.erase.length){const ef=eraseFor(rec.photo,rec);if(ef)x.drawImage(ef,L.dx,L.dy,L.dw,L.dh)}
+  x.save();x.globalAlpha=alpha;x.imageSmoothingQuality='high';
+  const cut=rec.bg&&rec.bg!=='none'?cutFor(rec):null;if(rec.bg&&rec.bg!=='none'&&!cut)wantMask(rec);
+  if(cut){x.save();x.beginPath();x.rect(0,0,W,H);x.clip();paintBg(x,W,H,rec.bg);x.restore();x.drawImage(cut,L.dx,L.dy,L.dw,L.dh)}
+  else{x.drawImage(ph.el,L.dx,L.dy,L.dw,L.dh);
+  if(rec.erase&&rec.erase.length){const ef=eraseFor(rec.photo,rec);if(ef)x.drawImage(ef,L.dx,L.dy,L.dw,L.dh)}}
   if(face&&rec.mask.length){const sm=smudgeFor(rec.photo,rec);if(sm){x.globalAlpha=alpha*.95;x.drawImage(sm,L.dx,L.dy,L.dw,L.dh)}}
   x.restore();return L;
 }
@@ -660,20 +739,19 @@ function renderMain(){
   </section>
 
   <section class="stage" aria-label="사진 비교">
-    <div class="stage__bar">
-      <span class="grow"></span>
+    <div class="stage__bar stage__bar--grid">
       <button type="button" class="chip" data-act="auto-align">${ic('sparkle')}자동 맞추기</button>
       <button type="button" class="chip ${mode&&mode.kind==='adjust'?'is-on':''}" data-act="mode-adjust">${ic('move')}직접 맞추기</button>
-      <button type="button" class="chip ${mode&&mode.kind==='mask'?'is-on':''}" data-act="mode-mask">${ic('eraser')}얼굴 지우기</button>
       <button type="button" class="chip ${mode&&mode.kind==='text'?'is-on':''}" data-act="mode-text">${ic('type')}글씨 지우기</button>
+      <button type="button" class="chip ${mode&&mode.kind==='bg'?'is-on':''}" data-act="mode-bg">${ic('bg')}배경 고르기</button>
     </div>
-    <div class="pair">${sides.map(([k,L])=>{const r=c[k];const editing=mode&&mode.side===k;const dim=mode&&!editing;
+    <div class="pair">${sides.map(([k,L])=>{const r=c[k];const editing=mode&&mode.side===k;const dim=mode&&mode.kind!=='bg'&&!editing;
       return `<div class="slot">
         <div class="frame ${editing?'is-editing '+(mode.kind!=='adjust'?'mask':''):''} ${dim?'is-dim':''}" data-frame="${k}">
           <canvas></canvas>
           ${r.photo?'':`<button type="button" class="frame__empty" data-act="upload" data-side="${k}"><span class="plus">${ic('camera')}</span>${L} 사진 추가</button>`}
           <span class="frame__badge ${k}">${L}</span>
-          ${r.photo&&S.face&&!r.mask.length&&!editing?`<span class="frame__hint">얼굴 지우기로 얼굴을 문질러 가려주세요</span>`:''}
+          ${r.photo&&S.face&&!r.mask.length&&!editing?`<span class="frame__hint">얼굴을 못 찾았어요 · 자동 맞추기를 다시 눌러주세요</span>`:''}
           ${editing&&mode.kind==='adjust'?`<span class="frame__hint">드래그로 이동 · 두 손가락이나 휠로 확대</span>`:''}
           ${editing&&mode.kind==='mask'?`<span class="frame__hint">얼굴 위를 손가락으로 문지르세요</span>`:''}
           ${editing&&mode.kind==='text'?`<span class="frame__hint">지울 글씨 위를 손가락으로 문지르세요</span>`:''}
@@ -724,6 +802,10 @@ function renderMain(){
 
 function toolsHTML(c){
   if(!mode)return '';
+  if(mode.kind==='bg'){const cur=c.before.bg||c.after.bg||'none';return `<div class="tools">
+    <div class="bgopts">${BGS.map(([v,L])=>`<button type="button" class="bgopt ${cur===v?'is-on':''}" data-act="bg-set" data-v="${v}"><canvas data-bgthumb="${v}" width="90" height="120"></canvas>${L}</button>`).join('')}</div>
+    <div class="tools__row"><span class="grow"></span><button type="button" class="mini" data-act="done" style="background:var(--stage-accent);color:#06201C;border-color:transparent">${ic('check')}완료</button></div>
+    <p>사람만 남기고 뒤 배경을 바꿔요. 비포·애프터 두 사진에 같은 배경이 들어가서 몸 변화가 더 잘 보여요.</p></div>`}
   const r=c[mode.side];
   const segs=`<div class="seg">${sides.map(([k,L])=>`<button type="button" class="${mode.side===k?'is-on':''}" data-act="side" data-side="${k}">${L}</button>`).join('')}</div>`;
   if(mode.kind==='adjust')return `<div class="tools">
@@ -1140,6 +1222,12 @@ document.addEventListener('click',async e=>{
       renderMain();break}
     case 'auto-text':{if(!isPro()){premiumSheet();toast('글씨 자동 지우기는 프리미엄 기능이에요');break}let n=0;for(const k of ['before','after']){const r=c[k];if(!r.photo)continue;const st=findTextStrokes(r);if(!st.length)continue;(r.erase||(r.erase=[])).push(...st);n+=st.length}
       if(n){touch(c);await persist();renderToolsOnly();drawAll();toast(`글씨 ${n}곳을 찾아 지웠어요. 마음에 안 들면 되돌리기를 눌러주세요`)}else toast('자동으로 찾은 글씨가 없어요. 글씨 위를 손가락으로 문질러 주세요');break}
+    case 'mode-bg':{if(mode&&mode.kind==='bg'){mode=null;renderMain();break}if(!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}
+      mode={kind:'bg'};renderMain();Promise.all(['before','after'].map(k=>c[k].photo?loadPersonMask(c[k].photo).catch(()=>null):null)).then(()=>{if(mode&&mode.kind==='bg')drawBgThumbs()});break}
+    case 'bg-set':{const v=b.dataset.v;
+      if(v!=='none'){toast('사람을 찾고 있어요…');const ms=await Promise.all(['before','after'].map(k=>c[k].photo?loadPersonMask(c[k].photo).catch(()=>null):'skip'));
+        if(ms.some(m=>!m)){toast('사진에서 사람을 찾지 못했어요. 전신이 보이는 사진인지 확인하거나 인터넷 연결을 확인해주세요');break}}
+      ['before','after'].forEach(k=>{c[k].bg=v==='none'?null:v});touch(c);await persist();renderMain();toast(v==='none'?'원래 배경으로 돌아왔어요':'배경을 바꿨어요');break}
     case 'side':mode.side=b.dataset.side;renderMain();break;
     case 'done':mode=null;await persist();renderMain();break;
     case 'ghost':ghost=!ghost;renderToolsOnly();drawAll();break;
@@ -1195,7 +1283,7 @@ const flushSave=()=>{if(ACC&&saveTimer){persist()}};document.addEventListener('v
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,80)});
 
 const freeCanvas=cv=>{if(cv&&cv.tagName==='CANVAS'){cv.width=0;cv.height=0}};
-function freePhoto(id){const p=photos[id];if(p)freeCanvas(p.el);delete photos[id];const m=smudges[id];if(m){freeCanvas(m.base);freeCanvas(m.mask);freeCanvas(m.comp)}delete smudges[id];const e=erases[id];if(e)freeCanvas(e.out);delete erases[id]}
+function freePhoto(id){const p=photos[id];if(p)freeCanvas(p.el);if(personMasks[id]){freeCanvas(personMasks[id]);delete personMasks[id]}if(cutCache[id]){freeCanvas(cutCache[id].out);delete cutCache[id]}delete photos[id];const m=smudges[id];if(m){freeCanvas(m.base);freeCanvas(m.mask);freeCanvas(m.comp)}delete smudges[id];const e=erases[id];if(e)freeCanvas(e.out);delete erases[id]}
 let photoGen=0;
 function syncPhotos(){
   const c=active(),keep=new Set(c?[c.before.photo,c.after.photo].filter(Boolean):[]);
