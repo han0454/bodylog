@@ -627,7 +627,7 @@ function paintBg(x,W,H,v){
     x.fillStyle='#ffffff';x.fillRect(0,0,rw,H);x.strokeStyle='rgba(30,60,50,.45)';x.beginPath();x.moveTo(rw,0);x.lineTo(rw,H);x.stroke();
     x.fillStyle='#2f5d50';x.textAlign='left';x.textBaseline='middle';x.font=`700 ${Math.max(6,W*.032)}px system-ui,sans-serif`;
     for(let i=0;i*c/2<=H+1;i++){const y=H-i*c/2,big=i%8===0;x.strokeStyle='rgba(30,60,50,.55)';x.beginPath();x.moveTo(rw,y);x.lineTo(rw-(big?rw*.45:i%2?rw*.18:rw*.3),y);x.stroke();
-      if(big&&i>0&&y>W*.04)x.fillText(String(i*5),W*.008,y)}}
+      if(big&&i>0&&y>H*.14)x.fillText(String(i*5),W*.008,y)}}
   x.restore();
 }
 function getSeg(){
@@ -899,7 +899,7 @@ function renderCard(scale=1){
     x.fillStyle=mut;x.font=`600 ${tall?28:24}px "IBM Plex Sans KR", sans-serif`;x.fillText('진행 기간',bx,by-big-(tall?8:6));
     x.textAlign='left';}
   y+=tall?52:44;x.fillStyle=mut;x.font='500 28px "IBM Plex Sans KR", sans-serif';
-  x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 ${brandName()}`,M,y);
+  x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 ${isPro()?(S.coach||'핏코치'):'핏코치'}`,M,y);
   y+=tall?56:40;
   if(tall){ // 9:16: photos grow to fill the card instead of leaving an empty bottom
     const hasNums=S.showNums&&METRICS.some(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
@@ -1039,12 +1039,13 @@ function premiumSheet(){
     <ol class="pro-list">${perks.map((t,i)=>`<li><span class="pro-n">${i+1}</span><span>${t}</span></li>`).join('')}</ol>
     <p style="margin:0;color:var(--muted);font-size:12.5px">결제는 정식 출시 때 열려요. 지금은 테스트로 프리미엄 기능을 미리 써볼 수 있어요.</p>
     <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" data-act="pro-on">프리미엄 미리 써보기</button></div>`);return}
-  modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO 사용 중</span><h3>워터마크 설정</h3>
+  modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO 사용 중</span><h3>우리 상호 알리기</h3>
     <form id="wmForm" style="display:flex;flex-direction:column;gap:12px">
-    <label class="form-field">워터마크 문구<input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'핏코치')} (비워두면 클럽 이름)"></label>
+    <label class="form-field">상호 이름 <small style="color:var(--muted);font-weight:500">(공유 이미지 맨 위·워터마크에 표시)</small><input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'예: 피다다이어트')}"></label>
+    <label class="form-field">코치 이름 <small style="color:var(--muted);font-weight:500">(고객 이름 옆 '담당 OOO'에 표시)</small><input id="f-wmcoach" maxlength="20" value="${esc(S.coach||'')}" placeholder="예: 한효정코치"></label>
     <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="f-wmoff" ${S.wmOff?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">워터마크 없애기</label>
     <div class="row"><button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">저장</button></div></form>`,sh=>{
-    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderMain();toast('워터마크를 저장했습니다')})});
+    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderAll();toast('저장했습니다')})});
 }
 function coachForm(){
   modal(`<h3>코치 정보</h3><form id="coachForm" style="display:flex;flex-direction:column;gap:12px"><label class="form-field">코치 이름 (공유 이미지에 표시)<input id="f-coach" maxlength="20" value="${esc(S.coach)}"></label>
