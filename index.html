@@ -527,7 +527,9 @@ function eraseFor(id,rec){
   flat.forEach(({p,prev})=>{const r=p[2]*k;mc.beginPath();mc.arc(p[0]*k,p[1]*k,r,0,Math.PI*2);mc.fill();
     if(prev){mc.lineWidth=r*2;mc.lineCap='round';mc.strokeStyle='#000';mc.beginPath();mc.moveTo(prev[0]*k,prev[1]*k);mc.lineTo(p[0]*k,p[1]*k);mc.stroke()}});
   // grow the hole a little so letter edges never survive
-  const mg=mk(w,h),gc=mg.getContext('2d');for(const [dx,dy] of [[0,0],[3,0],[-3,0],[0,3],[0,-3]])gc.drawImage(m,dx,dy);
+  let mg=mk(w,h),gc=mg.getContext('2d');for(const [dx,dy] of [[0,0],[3,0],[-3,0],[0,3],[0,-3]])gc.drawImage(m,dx,dy);
+  // smart brush: inside the rubbed area only thin letter strokes are removed, so feet, body and floor stay
+  {const tm=textOnlyMask(ph,mg,w,h);if(tm){freeCanvas(mg);mg=tm}}
   const holed=mk(w,h),hc=holed.getContext('2d');hc.drawImage(ph.el,0,0,w,h);hc.globalCompositeOperation='destination-out';hc.drawImage(mg,0,0);
   const fill=mk(w,h),fc=fill.getContext('2d');fc.imageSmoothingQuality='high';
   for(const f of [96,48,24,12,6,3]){const sm=mk(w/f,h/f),sc=sm.getContext('2d');sc.imageSmoothingQuality='high';sc.drawImage(holed,0,0,sm.width,sm.height);
@@ -539,6 +541,28 @@ function eraseFor(id,rec){
   const soft=mk(w,h),so=soft.getContext('2d');so.filter='blur(2px)';so.drawImage(mg,0,0);if(so.filter!=='blur(2px)')so.drawImage(mg,0,0);
   oc.globalCompositeOperation='destination-in';oc.drawImage(soft,0,0);
   erases[id]={sig,recRef:rec,out};return out;
+}
+
+/* thin bright or dark strokes (letters) inside the rubbed area; null when none are found (then the whole area is erased) */
+function textOnlyMask(ph,mg,w,h){
+  const B=mg.getContext('2d').getImageData(0,0,w,h).data;let x0=w,x1=-1,y0=h,y1=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(B[(y*w+x)*4+3]>40){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<0)return null;
+  const rad=Math.max(4,Math.round(Math.max(w,h)*.007)),pad=rad*2+4;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);
+  const bw=x1-x0+1,bh=y1-y0+1,cv=mk(w,h),cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(ph.el,0,0,w,h);
+  const d=cx.getImageData(x0,y0,bw,bh).data;freeCanvas(cv);
+  const I=new Float32Array(bw*bh);for(let i=0;i<bw*bh;i++)I[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  const filt=(src,isMax)=>{const a=new Float32Array(bw*bh),o=new Float32Array(bw*bh);
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){let v=isMax?-1:999;for(let i=Math.max(0,x-rad);i<=Math.min(bw-1,x+rad);i++){const u=src[y*bw+i];v=isMax?(u>v?u:v):(u<v?u:v)}a[y*bw+x]=v}
+    for(let x=0;x<bw;x++)for(let y=0;y<bh;y++){let v=isMax?-1:999;for(let j=Math.max(0,y-rad);j<=Math.min(bh-1,y+rad);j++){const u=a[j*bw+x];v=isMax?(u>v?u:v):(u<v?u:v)}o[y*bw+x]=v}return o};
+  const open=filt(filt(I,false),true),close=filt(filt(I,true),false);
+  const T=new Uint8Array(bw*bh);let cnt=0;
+  for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const i=y*bw+x;if(B[((y+y0)*w+x+x0)*4+3]<=40)continue;if(I[i]-open[i]>38||close[i]-I[i]>38){T[i]=1;cnt++}}
+  if(cnt<25)return null;
+  const out=new ImageData(w,h),od=out.data,g=4;
+  for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){if(!T[y*bw+x])continue;
+    for(let j=-g;j<=g;j++)for(let i=-g;i<=g;i++){const X=x+x0+i,Y=y+y0+j;if(X<0||Y<0||X>=w||Y>=h)continue;const q=(Y*w+X)*4;od[q+3]=255}}
+  const r=mk(w,h);r.getContext('2d').putImageData(out,0,0);return r;
 }
 
 /* ---------- auto text finder: looks for bright overlay text (time-stamp app dates, logos) and returns erase strokes ---------- */
