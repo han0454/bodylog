@@ -644,19 +644,19 @@ function getSeg(){
 }
 async function loadPersonMask(id){
   if(!id||personMasks[id])return personMasks[id]||null;
-  const saved=await DB.get('seg:'+id);
+  const saved=await DB.get('seg2:'+id);
   if(saved){try{const im=await loadImg(saved);const c=mk(im.naturalWidth,im.naturalHeight);c.getContext('2d').drawImage(im,0,0);personMasks[id]=c;return c}catch(e){}}
   const ph=await ensurePhoto(id);if(!ph)return null;
   const lm=await getSeg();let out=null;
   lm.segment(ph.el,res=>{const m=res.confidenceMasks&&res.confidenceMasks[0];if(!m)return;
     const w=m.width,h=m.height,f=m.getAsFloat32Array(),c=mk(w,h),cx=c.getContext('2d'),d=cx.createImageData(w,h);
-    for(let i=0;i<w*h;i++){const a=Math.min(1,Math.max(0,(f[i]-.35)/.3));d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=0;d.data[i*4+3]=a*255}
+    for(let i=0;i<w*h;i++){const a=Math.min(1,Math.max(0,(f[i]-.5)/.3));d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=0;d.data[i*4+3]=a*255}
     cx.putImageData(d,0,0);out=c});
   if(!out)return null;
   // soften the outline a little
   const soft=mk(out.width,out.height),sx=soft.getContext('2d');sx.filter=`blur(${Math.max(1,out.width/500)}px)`;sx.drawImage(out,0,0);if(sx.filter==='none')sx.drawImage(out,0,0);
   freeCanvas(out);personMasks[id]=soft;
-  try{DB.set('seg:'+id,soft.toDataURL('image/png'))}catch(e){}
+  try{DB.set('seg2:'+id,soft.toDataURL('image/png'))}catch(e){}
   return soft;
 }
 function cutFor(rec){
@@ -666,7 +666,6 @@ function cutFor(rec){
   const k=Math.min(1,1400/Math.max(ph.w,ph.h)),w=Math.round(ph.w*k),h=Math.round(ph.h*k);
   const out=c&&c.out&&c.out.width===w?c.out:mk(w,h),x=out.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,w,h);
   x.imageSmoothingQuality='high';x.drawImage(ph.el,0,0,w,h);
-  if(rec.erase&&rec.erase.length){const ef=eraseFor(id,rec);if(ef)x.drawImage(ef,0,0,w,h)}
   x.globalCompositeOperation='destination-in';x.drawImage(m,0,0,w,h);x.globalCompositeOperation='source-over';
   cutCache[id]={sig,rec,out};return out;
 }
