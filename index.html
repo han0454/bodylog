@@ -865,7 +865,7 @@ function drawFrame(k){
   }
 }
 let raf=0;
-function drawAll(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{drawFrame('before');drawFrame('after');drawPreview()})}
+function drawAll(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{drawFrame('before');drawFrame('after');drawPreview();if(mode&&mode.kind==='bg')drawBgThumbs()})}
 let pvTimer;function drawPreviewSoon(){clearTimeout(pvTimer);pvTimer=setTimeout(drawPreview,120)}
 
 /* ---------- share image ---------- */
