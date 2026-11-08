@@ -541,6 +541,45 @@ function eraseFor(id,rec){
   erases[id]={sig,recRef:rec,out};return out;
 }
 
+/* ---------- auto text finder: looks for bright overlay text (time-stamp app dates, logos) and returns erase strokes ---------- */
+function findTextStrokes(rec){
+  const ph=rec.photo&&photos[rec.photo];if(!ph)return [];
+  const k=Math.min(1,700/Math.max(ph.w,ph.h)),w=Math.round(ph.w*k),h=Math.round(ph.h*k);
+  const cv=mk(w,h),cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(ph.el,0,0,w,h);
+  const d=cx.getImageData(0,0,w,h).data,Y=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++)Y[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  freeCanvas(cv);
+  // text pixel = bright stroke with a dark edge/shadow right next to it
+  const T=new Uint8Array(w*h),R=2;
+  for(let y=R;y<h-R;y++)for(let x=R;x<w-R;x++){const v=Y[y*w+x];if(v<180)continue;let mn=255;
+    for(let j=-R;j<=R;j++)for(let i=-R;i<=R;i++){const u=Y[(y+j)*w+x+i];if(u<mn)mn=u}
+    if(v-mn>=75)T[y*w+x]=1}
+  // join letters of one line (gaps along rows, small gaps between rows)
+  const M=new Uint8Array(T),gap=Math.max(4,Math.round(w*.014));
+  for(let y=0;y<h;y++){let last=-1;for(let x=0;x<w;x++)if(T[y*w+x]){if(last>=0&&x-last<=gap)for(let q=last+1;q<x;q++)M[y*w+q]=1;last=x}}
+  for(let x=0;x<w;x++){let last=-1;for(let y=0;y<h;y++)if(M[y*w+x]){if(last>=0&&y-last<=3)for(let q=last+1;q<y;q++)M[q*w+x]=1;last=y}}
+  // body area (when the pose is known) is left alone
+  const P=rec.pose,f=P&&P.face;let bx0=-1,bx1=-1,by0=0,by1=0;
+  if(f){const cxp=P.sh?P.sh[0]:f.cx,hw=f.r*3.4;bx0=(cxp-hw)*k;bx1=(cxp+hw)*k;by0=(f.cy-f.r*1.3)*k;by1=(P.ank?P.ank[1]+f.r:ph.h)*k}
+  const lab=new Int32Array(w*h),out=[];let n=0;const stack=[];
+  for(let s0=0;s0<w*h;s0++){if(!M[s0]||lab[s0])continue;n++;lab[s0]=n;stack.push(s0);let x0=w,x1=0,y0=h,y1=0,cnt=0,area=0;
+    while(stack.length){const q=stack.pop(),x=q%w,y=(q-x)/w;area++;if(T[q])cnt++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+      if(x>0&&M[q-1]&&!lab[q-1]){lab[q-1]=n;stack.push(q-1)}if(x<w-1&&M[q+1]&&!lab[q+1]){lab[q+1]=n;stack.push(q+1)}
+      if(y>0&&M[q-w]&&!lab[q-w]){lab[q-w]=n;stack.push(q-w)}if(y<h-1&&M[q+w]&&!lab[q+w]){lab[q+w]=n;stack.push(q+w)}}
+    const bw=x1-x0+1,bh=y1-y0+1;
+    if(bh<5||bh>h*.12||bw<bh*1.2||bw>w*.95||cnt<20)continue;
+    const dens=cnt/(bw*bh);if(dens<.06||dens>.6)continue;
+    // letters cross a row many times; plain edges (door frames, blinds) do not
+    let tr=0,rows=0;for(let y=y0+Math.floor(bh*.25);y<=y0+Math.ceil(bh*.75);y++){rows++;for(let x=x0+1;x<=x1;x++)if(T[y*w+x]!==T[y*w+x-1])tr++}
+    if(tr/Math.max(1,rows)<Math.max(4,bw/bh*1.2))continue;
+    const mx=(x0+x1)/2,my=(y0+y1)/2;if(mx>bx0&&mx<bx1&&my>by0&&my<by1)continue;
+    out.push([x0,y0,x1,y1]);
+  }
+  // one erase stroke per text line, in photo pixels
+  return out.map(([x0,y0,x1,y1])=>{const r=Math.max(4,(y1-y0+1)*.8)/k,yc=(y0+y1)/2/k,a=x0/k,b=x1/k,st=[];
+    for(let x=a;;x+=r*.6){st.push([Math.min(x,b),yc,r]);if(x>=b)break}return st});
+}
+
 /* ---------- drawing a record into a fixed 3:4 box (frame never moves; only the photo inside does) ---------- */
 function layoutOf(rec,ph,W,H){const base=Math.max(W/ph.w,H/ph.h),sc=base*rec.tf.s,dw=ph.w*sc,dh=ph.h*sc;return{sc,dw,dh,dx:(W-dw)/2+rec.tf.x*W,dy:(H-dh)/2+rec.tf.y*H}}
 function drawRec(x,rec,W,H,face,alpha=1){
@@ -598,7 +637,6 @@ function renderMain(){
 
   <section class="stage" aria-label="사진 비교">
     <div class="stage__bar">
-      <button type="button" class="chip ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}">${ic('face')}얼굴 가림 <span class="switch"></span></button>
       <span class="grow"></span>
       <button type="button" class="chip" data-act="auto-align">${ic('sparkle')}자동 맞추기</button>
       <button type="button" class="chip ${mode&&mode.kind==='adjust'?'is-on':''}" data-act="mode-adjust">${ic('move')}직접 맞추기</button>
@@ -677,8 +715,9 @@ function toolsHTML(c){
       <button type="button" class="mini" data-act="undo" ${st.length?'':'disabled style="opacity:.4"'}>${ic('undo')}되돌리기</button>
       <button type="button" class="mini" data-act="clear-mask" ${st.length?'':'disabled style="opacity:.4"'}>${ic('trash')}모두 지우기</button>
       <button type="button" class="mini" data-act="done" style="background:var(--stage-accent);color:#06201C;border-color:transparent">${ic('check')}완료</button></div>
+    ${isText?`<div class="tools__row"><button type="button" class="mini" data-act="auto-text" style="height:34px;padding:0 14px;font-size:13px;background:var(--stage-accent);color:#06201C;border-color:transparent">${ic('sparkle')}자동으로 글씨 찾아 지우기${isPro()?'':' · PRO 🔒'}</button></div>`:''}
     <div class="tools__row"><label class="range">붓 크기<input type="range" id="brush" min="3" max="18" step="0.5" value="${brush*100}"><output class="num" id="brushOut">${Math.round(brush*100)}</output></label></div>
-    <p>${isText?'옷·벽·체중계의 글씨나 로고 위를 문지르면 주변 배경색으로 자연스럽게 지워집니다.':'얼굴 부분만 대충 문지르면 반투명한 지우개 자국처럼 가려지고, 머리카락과 몸은 그대로 보입니다.'}</p></div>`;
+    <p>${isText?'자동 버튼은 날짜·시간 앱 글씨처럼 사진 위에 찍힌 흰 글씨를 찾아 지워요. 남은 글씨는 그 위를 문지르면 주변 배경색으로 자연스럽게 지워집니다.':'얼굴 부분만 대충 문지르면 반투명한 지우개 자국처럼 가려지고, 머리카락과 몸은 그대로 보입니다.'}</p></div>`;
 }
 
 /* ---------- canvas rendering ---------- */
@@ -838,7 +877,7 @@ function clientForm(c){
   const isNew=!c;c=c||{name:'',phone:'',memo:''};
   modal(`<h3>${isNew?'새 고객 등록':'고객 정보'}</h3>
     <form id="clientForm" style="display:flex;flex-direction:column;gap:12px">
-      <label class="form-field">이름<input id="f-name" maxlength="30" value="${esc(c.name)}" placeholder="예: 김민지"></label>
+      <label class="form-field">이름<input id="f-name" maxlength="30" value="${c.sample?'':esc(c.name)}" placeholder="예: 김민지"></label>
       <label class="form-field">나이 <small style="color:var(--muted);font-weight:500">(공유 이미지에 표시돼요, 비워도 돼요)</small><input id="f-age" inputmode="numeric" maxlength="3" value="${esc(c.age||'')}" placeholder="예: 52"></label>
       <label class="form-field">전화번호<input id="f-phone" inputmode="tel" maxlength="20" value="${esc(c.phone)}" placeholder="010-0000-0000"></label>
       <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;cursor:pointer"><input type="checkbox" id="f-consent" ${c.consent?'checked':''} style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent)"><span><b>사진 활용 동의 받음</b><br><small style="color:var(--muted)">얼굴을 가린 비포·애프터 사진을 SNS·홍보에 쓰는 것에 고객이 동의했어요</small></span></label>
@@ -886,7 +925,7 @@ function snapModal(c,sn){
 }
 const PRO_PRICE='9,900원';
 const PRO_TITLE='내 브랜드를 알리는 비포·애프터';
-const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료·광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
+const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>사진 속 글씨 자동 지우기</b><br><small>날짜·시간 앱 글씨를 버튼 한 번으로 깨끗하게 지워요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료·광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
 const proPromo=()=>`<div class="pro-promo"><b>${PRO_TITLE} · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프리미엄 보기</button></div>`;
 function premiumSheet(){
   const perks=PRO_PERKS;
@@ -1075,6 +1114,8 @@ document.addEventListener('click',async e=>{
     case 'mode-adjust':case 'mode-mask':case 'mode-text':{const kind=act==='mode-adjust'?'adjust':act==='mode-text'?'text':'mask';
       if(mode&&mode.kind===kind){mode=null}else{const side=mode?mode.side:(c.before.photo?'before':'after');if(!c[side].photo&&!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}mode={kind,side:c[side].photo?side:(side==='before'?'after':'before')};if(kind==='mask'&&!S.face){S.face=true;markDirty()}}
       renderMain();break}
+    case 'auto-text':{if(!isPro()){premiumSheet();toast('글씨 자동 지우기는 프리미엄 기능이에요');break}let n=0;for(const k of ['before','after']){const r=c[k];if(!r.photo)continue;const st=findTextStrokes(r);if(!st.length)continue;(r.erase||(r.erase=[])).push(...st);n+=st.length}
+      if(n){touch(c);await persist();renderToolsOnly();drawAll();toast(`글씨 ${n}곳을 찾아 지웠어요. 마음에 안 들면 되돌리기를 눌러주세요`)}else toast('자동으로 찾은 글씨가 없어요. 글씨 위를 손가락으로 문질러 주세요');break}
     case 'side':mode.side=b.dataset.side;renderMain();break;
     case 'done':mode=null;await persist();renderMain();break;
     case 'ghost':ghost=!ghost;renderToolsOnly();drawAll();break;
