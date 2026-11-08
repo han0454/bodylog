@@ -635,7 +635,7 @@ function getSeg(){
   getSeg.p=(async()=>{
     const V=await import(`${MPCDN}/vision_bundle.mjs`);const rel=p=>new URL(p,location.href).href;
     const tries=[
-      [{wasmLoaderPath:rel('mp/vision_wasm_internal.js'),wasmBinaryPath:rel('mp/vision_wasm_internal.wasm')},rel('mp/selfie_segmenter.tflite')],
+      [{wasmLoaderPath:rel('mp/vision_wasm_internal.js'),wasmBinaryPath:rel('mp/vision_wasm_internal.wasm')},rel('mp/selfie_segmenter.wasm')],
       [{wasmLoaderPath:`${MPCDN}/wasm/vision_wasm_internal.js`,wasmBinaryPath:`${MPCDN}/wasm/vision_wasm_internal.wasm`},'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite']];
     for(const [w,m] of tries){try{return await V.ImageSegmenter.createFromOptions(w,{baseOptions:{modelAssetPath:m,delegate:'CPU'},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false})}catch(e){console.warn('seg load',e)}}
     throw new Error('seg unavailable');
