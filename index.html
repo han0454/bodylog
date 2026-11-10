@@ -182,6 +182,7 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .memo:focus{border-color:var(--accent);background:var(--surface)}
 
 /* share */
+.mtable tr.bc-sub td{text-align:left!important;padding-top:14px;font-weight:700;color:var(--ink)}.mtable tr.bc-sub small{font-weight:500;color:var(--muted);margin-left:6px}
 .share{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:18px;align-items:start}
 @media (max-width:520px){.share{grid-template-columns:minmax(0,1fr)}.share canvas{max-width:200px;margin:0 auto}}
 .share canvas{width:100%;border-radius:12px;display:block;border:1px solid var(--line);background:#111416}
@@ -335,7 +336,7 @@ const DB={db:null,
 };
 
 /* ---------- state ---------- */
-const blankRec=()=>({photo:null,date:'',weight:'',fat:'',muscle:'',visceral:'',tf:{s:1,x:0,y:0},mask:[]});
+const blankRec=()=>({photo:null,date:'',weight:'',fat:'',muscle:'',visceral:'',water:'',protein:'',mineral:'',tf:{s:1,x:0,y:0},mask:[]});
 let S={coach:'코치',activeId:null,face:true,ratio:'916',showName:false,showNums:true,clients:[]};
 const photos={}; // id -> {el,w,h}
 const smudges={}; // photo id -> cache
@@ -392,9 +393,9 @@ function makeSample(){
   const d=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
   const map=([x,y])=>[470+.9*(x-450),70+.9*y];
   const c={id:'sample',name:'예시 고객',phone:'010-1234-5678',memo:'예시 데이터입니다. 자유롭게 수정하거나 삭제해도 됩니다.',createdAt:Date.now(),updatedAt:Date.now()-3*864e5,sample:true,consent:1,history:[],
-    before:{photo:'sample:before',date:d(87),weight:'72.4',fat:'34.2',muscle:'24.1',visceral:'9',tf:{s:1,x:0,y:0},mask:[],
+    before:{photo:'sample:before',date:d(87),weight:'72.4',fat:'34.2',muscle:'24.1',visceral:'9',water:'33.4',protein:'8.5',mineral:'2.4',tf:{s:1,x:0,y:0},mask:[],
       pose:{sh:[450,375],hip:[450,610],ank:[450,1105],face:{cx:450,cy:262,r:66}}},
-    after:{photo:'sample:after',date:d(3),weight:'68.8',fat:'29.8',muscle:'24.6',visceral:'7',tf:{s:1,x:0,y:0},mask:[],
+    after:{photo:'sample:after',date:d(3),weight:'68.8',fat:'29.8',muscle:'24.6',visceral:'7',water:'37.9',protein:'9.9',mineral:'3.1',tf:{s:1,x:0,y:0},mask:[],
       pose:{sh:map([450,375]),hip:map([450,610]),ank:map([450,1105]),face:{cx:470,cy:70+.9*262,r:66*.9}}}};
   photos['sample:before']=photos['sample:before']||samplePhoto(false);photos['sample:after']=photos['sample:after']||samplePhoto(true);
   autoMask(c.before);autoMask(c.after);autoAlign(c);
@@ -784,6 +785,8 @@ function renderMain(){
       <div class="mwrap"><table class="mtable"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th>변화</th></tr></thead><tbody>
         <tr><td>측정일</td>${sides.map(([k])=>`<td><label class="field"><input type="date" id="date-${k}" data-field="date" data-side="${k}" value="${esc(c[k].date)}" aria-label="${k} 측정일"></label></td>`).join('')}<td><span class="delta ${per?'':'none'} num">${per||'–'}</span></td></tr>
         ${METRICS.map(([f,lab,u,low,du])=>`<tr><td>${lab}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" id="${f}-${k}" data-field="${f}" data-side="${k}" value="${esc(c[k][f])}" placeholder="0.0" aria-label="${k} ${lab}"><small>${u}</small></label></td>`).join('')}<td data-delta="${f}">${deltaCell(c.before[f],c.after[f],du,low)}</td></tr>`).join('')}
+        <tr class="bc-sub"><td colspan="4">체성분 그림용 <small>인바디 결과지 숫자 그대로</small></td></tr>
+        ${BCM.map(([f,lab,u,low,du])=>`<tr><td>${lab}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" id="${f}-${k}" data-field="${f}" data-side="${k}" value="${esc(c[k][f]||'')}" placeholder="0.0" aria-label="${k} ${lab}"><small>${u}</small></label></td>`).join('')}<td data-delta="${f}">${deltaCell(c.before[f],c.after[f],du,low)}</td></tr>`).join('')}
       </tbody></table></div>
       <div style="margin-top:16px"><span class="label">코칭 메모</span><textarea class="memo" id="memo" data-field="memo" placeholder="식단, 운동, 상담 내용을 적어두세요">${esc(c.memo||'')}</textarea></div>
     </section>
@@ -808,6 +811,21 @@ function renderMain(){
       </div>
     </section>
   </div>
+
+  <section class="card" aria-label="체성분 비교 그림">
+    <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>왼쪽 반은 기준 모양, 오른쪽 반은 측정 모양이에요</p></div>
+    <div class="share">
+      <div>
+        <div class="lseg" role="group" aria-label="체성분 그림 사이즈">
+          <button type="button" data-act="bc-ratio" data-v="916" class="${S.bcRatio!=='34'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
+          <button type="button" data-act="bc-ratio" data-v="34" class="${S.bcRatio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
+        </div>
+        ${bcMissing(c).length?`<p class="empty-note" style="margin:12px 0">위 <b>수치 기록</b>에 아래 칸을 채우면 그림이 만들어져요.<br>${bcMissing(c).map(esc).join('<br>')}</p>`:`<p class="empty-note" style="margin:12px 0">이름·나이·담당 코치·진행 기간이 함께 들어가요. 기록 저장을 누르면 이 고객 파일에 같이 저장돼요.</p>`}
+        <button type="button" class="btn btn--primary" style="width:100%" data-act="bc-export" ${bcMissing(c).length?'disabled':''}>${ic('share')}체성분 그림 만들기</button>
+      </div>
+      <canvas id="bcPreview" aria-label="체성분 그림 미리보기"></canvas>
+    </div>
+  </section>
 
   <section class="card" aria-label="고객 파일">
     <div class="card__head"><div><span class="label">Client file</span><h2>저장된 비교 기록 <small class="num" style="color:var(--muted);font-weight:500">${(c.history||[]).length}</small></h2></div><p>기록 저장을 누를 때마다 이 고객 파일에 쌓입니다</p></div>
@@ -950,7 +968,166 @@ function renderCard(scale=1){
   x.fillStyle='#4D575E';x.font='500 22px "IBM Plex Sans KR", sans-serif';x.fillText('개인차가 있을 수 있습니다 · BODYLOG로 기록',M,H-(tall?96:56));
   return cv;
 }
-function drawPreview(){const pv=$('#preview');if(!pv||!active())return;const card=renderCard(.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
+function drawPreview(){const pv=$('#preview');if(!pv||!active())return;const card=renderCard(.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0);drawBCPreview()}
+/* ---------- body composition picture (InBody before/after as half-standard / half-measured figures + bar graph) ---------- */
+// entered from the InBody sheet in kg (water in L ≈ kg); shown as % of body weight. 체지방 uses 체지방률 from 수치 기록.
+const BCM=[['water','체수분','L',false,'L'],['protein','단백질','kg',false,'kg'],['mineral','무기질','kg',false,'kg']];
+const BC_KEYS=['mineral','protein','fat','water'];
+const BC_NAMES={water:'체수분',protein:'단백질',mineral:'무기질',fat:'체지방'};
+const BC_STD={mineral:[3.5,5.0],protein:[12.0,16.0],fat:[18.0,28.0],water:[50.0,60.0]};
+const BC_COL={ok:'#9BE22E',high:'#FF3B3B'};
+// each shortage has its own colour; too little body fat (weak, very thin) is pale sky blue
+const BC_LOW={mineral:'#B48CFF',protein:'#FFD23F',water:'#3D9BFF',fat:'#CDEFFF'};
+const BC_STXT={low:'부족',ok:'표준',high:'과다'};
+const bcSt=(k,v)=>v<BC_STD[k][0]?'low':v>BC_STD[k][1]?'high':'ok';
+const bcCol=(k,s)=>s==='low'?BC_LOW[k]:BC_COL[s];
+// % of body weight for one record, or null when something is missing
+function bcVals(r){const w=parseFloat(r.weight),f=parseFloat(r.fat);if(!(w>0)||isNaN(f))return null;const v={fat:f};
+  for(const [k] of BCM){const n=parseFloat(r[k]);if(!(n>0))return null;v[k]=Math.round(n/w*1000)/10}return v}
+function bcMissing(c){const miss=[];sides.forEach(([k,L])=>{const r=c[k],m=[];if(!(parseFloat(r.weight)>0))m.push('체중');if(isNaN(parseFloat(r.fat)))m.push('체지방률');BCM.forEach(([f,lab])=>{if(!(parseFloat(r[f])>0))m.push(lab)});if(m.length)miss.push(`${L}: ${m.join(', ')}`)});return miss}
+function bcType(v){const s=k=>bcSt(k,v[k]);if(s('fat')==='high')return s('protein')==='low'?'근육 부족 비만형':'비만형';if(s('fat')==='low')return '마른형';if(s('protein')==='low')return '근육 부족형';return '표준형'}
+const bcFac=(k,v)=>{const [lo,hi]=BC_STD[k];if(v<lo)return Math.max(.62,1-(lo-v)/lo*2.2);if(v>hi)return Math.min(1.6,1+(v-hi)/hi*1.6);return 1};
+function bcParts(f){
+  const P=[];
+  P.push({k:'mineral',draw:p=>{p.arc(0,60,50*f.mineral,0,Math.PI*2)}});
+  // softer, more natural outline (rounded shoulders, waist, short bent arms, tapered legs)
+  P.push({k:'protein',draw:p=>{const s=f.protein,cw=74*s,ww=cw*.86;
+    p.moveTo(-19,98);p.lineTo(19,98);p.quadraticCurveTo(18,112,26,116);
+    p.bezierCurveTo(cw*.75,120,cw,128,cw,160);
+    p.bezierCurveTo(cw,200,ww*.98,230,ww,250);p.lineTo(-ww,250);
+    p.bezierCurveTo(-ww*.98,230,-cw,200,-cw,160);
+    p.bezierCurveTo(-cw,128,-cw*.75,120,-26,116);p.quadraticCurveTo(-18,112,-19,98);p.closePath();
+    for(const sg of [-1,1]){const X=v=>sg*v,a=22*s,ex=cw+44;
+      p.moveTo(X(cw-12),122);
+      p.bezierCurveTo(X(cw+16),122,X(cw+26),146,X(cw+28),166);
+      p.bezierCurveTo(X(cw+34),180,X(ex+a*.6),190,X(ex+a*.6),206);
+      p.quadraticCurveTo(X(ex+a*.5),228,X(ex-2),232);
+      p.bezierCurveTo(X(ex-14),240,X(ww+22),252,X(ww+10),264);
+      p.quadraticCurveTo(X(ww-4),274,X(ww-6),258);
+      p.bezierCurveTo(X(ww),244,X(ex-20),222,X(ex-a*.7),204);
+      p.bezierCurveTo(X(ex-a*.9),192,X(cw+6),180,X(cw+2),164);
+      p.quadraticCurveTo(X(cw-2),140,X(cw-12),122);p.closePath()}}});
+  P.push({k:'fat',draw:p=>{const s=f.fat,top=f.protein*74*.86,bw=66*s,hip=70;
+    p.moveTo(-top,250);p.lineTo(top,250);
+    p.bezierCurveTo(top+8,285,bw*1.12,310,bw*1.1,350);p.bezierCurveTo(bw*1.06,390,hip+2,405,hip,420);
+    p.lineTo(-hip,420);
+    p.bezierCurveTo(-hip-2,405,-bw*1.06,390,-bw*1.1,350);p.bezierCurveTo(-bw*1.12,310,-top-8,285,-top,250);p.closePath()}});
+  P.push({k:'water',draw:p=>{const s=f.water,lw=32*s;
+    for(const sg of [-1,1]){const X=v=>sg*v,c=3+lw;
+      p.moveTo(X(c-lw),420);p.lineTo(X(c+lw+2),420);
+      p.bezierCurveTo(X(c+lw*1.02),480,X(c+lw*.82),540,X(c+lw*.7),570);
+      p.bezierCurveTo(X(c+lw*.82),610,X(c+lw*.66),660,X(c+lw*.44),690);
+      p.bezierCurveTo(X(c+lw*.6),706,X(c+lw*.8),714,X(c+lw*.62),722);
+      p.lineTo(X(c-lw*.42),722);p.quadraticCurveTo(X(c-lw*.6),716,X(c-lw*.42),692);
+      p.bezierCurveTo(X(c-lw*.5),650,X(c-lw*.66),610,X(c-lw*.56),570);
+      p.bezierCurveTo(X(c-lw*.62),530,X(c-lw*.9),470,X(c-lw),420);p.closePath()}}});
+  return P;
+}
+function bcBody(x,cx,oy,v,sc){
+  const one={mineral:1,protein:1,fat:1,water:1},meas={};for(const k of BC_KEYS)meas[k]=bcFac(k,v[k]);
+  const mid=k=>(BC_STD[k][0]+BC_STD[k][1])/2,clamp=(a,lo,hi)=>Math.max(lo,Math.min(hi,a));
+  // band borders: less water -> water line comes down, more fat -> fat line goes up
+  const stdB={neck:110,fat:250,water:420};
+  const mB={neck:110,fat:clamp(250-(v.fat-mid('fat'))*4,175,320),water:clamp(420+(mid('water')-v.water)*5,360,520)};
+  for(const [fs,side,Bd] of [[one,'L',stdB],[meas,'R',mB]]){
+    x.save();x.beginPath();side==='L'?x.rect(cx-300*sc,oy-20,300*sc,800*sc):x.rect(cx,oy-20,300*sc,800*sc);x.clip();
+    x.translate(cx,oy);x.scale(sc,sc);
+    const all=new Path2D(),list=bcParts(fs);for(const pt of list){const p=new Path2D();pt.draw(p);all.addPath(p)}
+    x.save();x.clip(all);
+    const bands=[['mineral',-10,Bd.neck],['protein',Bd.neck,Bd.fat],['fat',Bd.fat,Bd.water],['water',Bd.water,760]];
+    for(const [k,a,b] of bands){x.fillStyle=side==='L'?'#E8F1FA':bcCol(k,bcSt(k,v[k]));x.fillRect(-300,a,600,b-a)}
+    x.restore();
+    for(const pt of list){const p=new Path2D();pt.draw(p);x.lineWidth=4;x.strokeStyle='#08204A';x.stroke(p)}
+    x.lineWidth=3;x.strokeStyle=side==='L'?'rgba(8,32,74,.55)':'#08204A';
+    for(const y of [Bd.fat,Bd.water]){x.beginPath();x.moveTo(side==='L'?-140:0,y);x.lineTo(side==='L'?0:140,y);x.stroke()}
+    x.restore();
+  }
+  // where a line moved, the standard line stays as a white dashed guide on the measured half
+  x.save();x.translate(cx,oy);x.scale(sc,sc);x.setLineDash([8,7]);x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.9)';
+  for(const kk of ['fat','water'])if(Math.abs(mB[kk]-stdB[kk])>6){x.beginPath();x.moveTo(0,stdB[kk]);x.lineTo(150,stdB[kk]);x.stroke()}
+  x.restore();
+  x.strokeStyle='rgba(8,32,74,.9)';x.lineWidth=3;x.beginPath();x.moveTo(cx,oy+8*sc);x.lineTo(cx,oy+720*sc);x.stroke();
+  const mids=Bd=>({mineral:60,protein:(Bd.neck+Bd.fat)/2,fat:(Bd.fat+Bd.water)/2,water:(Bd.water+700)/2});
+  return {std:mids(stdB),meas:mids(mB)};
+}
+// d = {name, age, before:{date,weight,fat,water,protein,mineral}, after:{…}}; ratio '916' (1080×1920) or '34' (1080×1440)
+function renderBC(d,ratio,scale=1){
+  const W=1080,tall=ratio!=='34',H=tall?1920:1440,F='"IBM Plex Sans KR", sans-serif';
+  const cv=mk(W*scale,H*scale),x=cv.getContext('2d');x.scale(scale,scale);x.textBaseline='alphabetic';
+  const vb=bcVals(d.before),va=bcVals(d.after);
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0F3F86');g.addColorStop(1,'#0A2552');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // header
+  const days=(d.before.date&&d.after.date)?Math.round((new Date(d.after.date)-new Date(d.before.date))/864e5):0;
+  x.fillStyle='#fff';x.font=`700 30px Sora, sans-serif`;x.fillText('BODYLOG',50,76);
+  const club=brandName();if(club){x.fillStyle='#BFD3F2';x.font=`600 28px ${F}`;x.textAlign='right';let t=club;while(t.length>1&&x.measureText(t).width>560)t=t.slice(0,-1);if(t!==club)t+='…';x.fillText(t,W-50,76);x.textAlign='left'}
+  const hs=tall?56:48,h1y=tall?160:146,h2y=h1y+Math.round(hs*1.21);
+  x.fillStyle='#fff';x.font=`700 ${hs}px ${F}`;x.fillText(days>0?`${days}일 만에,`:'체성분 변화,',50,h1y);x.fillStyle='#FFE89A';x.fillText('몸속이 달라졌어요',50,h2y);
+  if(days>0){x.textAlign='right';x.fillStyle='#BFD3F2';x.font=`600 24px ${F}`;x.fillText('진행 기간',W-50,h1y-10);
+    x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillStyle='#9BE22E';x.font=`700 30px ${F}`;const uw=x.measureText('일째').width;x.fillText('일째',W-50,h2y+8);
+    x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillText(String(days),W-58-uw,h2y+8);x.textAlign='left'}
+  const iy=h2y+(tall?54:46);
+  x.fillStyle='#BFD3F2';x.font=`500 26px ${F}`;x.fillText(`${S.showName?d.name:maskName(d.name)} 님 · ${d.age?d.age+'세 · ':''}담당 ${isPro()?(S.coach||'핏코치'):'핏코치'} · 체성분 비교`,50,iy);
+  // two panels: half standard / half measured figure
+  const sc=tall?.92:.64,k=tall?1:.82,oy=iy+(tall?128:110),pTop=oy-90,bodyH=720*sc,typeH=tall?130:64,pH=90+20+bodyH+50+typeH+(tall?34:22);
+  const LY={mineral:60,protein:180,fat:335,water:560};
+  const panel=(label,date,v,px,pw)=>{const cx=px+pw/2,isB=label==='BEFORE';
+    x.fillStyle='rgba(255,255,255,.07)';rr(x,px,pTop,pw,pH,22);x.fill();
+    x.font=`700 ${Math.round(28*k)}px Sora, sans-serif`;x.textAlign='center';
+    x.fillStyle=isB?'#4D6A99':'#9BE22E';rr(x,cx-80*k,oy-74*k,160*k,44*k,12);x.fill();x.fillStyle=isB?'#fff':'#14250A';x.fillText(label,cx,oy-74*k+32*k);
+    x.font=`600 ${Math.round(20*k)}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('기준치',px+70*k,oy-4);x.fillText('측정치',px+pw-70*k,oy-4);x.fillText(date?fmtDate(date):'',cx,oy+20+bodyH+30);
+    const MID=bcBody(x,cx,oy+20,v,sc);
+    for(const kk of BC_KEYS){const y=oy+20+LY[kk]*sc,val=v[kk],s=bcSt(kk,val),ys=oy+20+MID.std[kk]*sc,ym=oy+20+MID.meas[kk]*sc;
+      x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=2;x.beginPath();x.moveTo(px+122*k,y);x.lineTo(px+150*k,y);x.lineTo(cx-22*sc,ys);x.moveTo(px+pw-122*k,y);x.lineTo(px+pw-150*k,y);x.lineTo(cx+22*sc,ym);x.stroke();
+      x.fillStyle='#fff';for(const [qx,qy] of [[cx-22*sc,ys],[cx+22*sc,ym]]){x.beginPath();x.arc(qx,qy,4,0,7);x.fill()}
+      x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${Math.round(22*k)}px ${F}`;x.fillText(BC_NAMES[kk],px+16,y-8*k);
+      x.fillStyle='#BFD3F2';x.font=`600 ${Math.round(18*k)}px ${F}`;x.fillText(`${BC_STD[kk][0]}~${BC_STD[kk][1]}%`,px+16,y+18*k);
+      x.textAlign='right';x.fillStyle='#fff';x.font=`700 ${Math.round(26*k)}px Sora, sans-serif`;x.fillText(val.toFixed(1)+'%',px+pw-14,y-4*k);
+      x.font=`700 ${Math.round(17*k)}px ${F}`;const tw=x.measureText(BC_STXT[s]).width+16;x.fillStyle=bcCol(kk,s);rr(x,px+pw-14-tw,y+6*k,tw,26*k,7);x.fill();
+      x.fillStyle=s==='high'?'#fff':'#0B1D33';x.textAlign='left';x.fillText(BC_STXT[s],px+pw-14-tw+8,y+6*k+19*k)}
+    const ty=oy+20+bodyH+50,type=bcType(v);x.fillStyle='rgba(0,0,0,.22)';rr(x,px+20,ty,pw-40,typeH,16);x.fill();x.textAlign='center';
+    if(tall){x.fillStyle='#BFD3F2';x.font=`600 22px ${F}`;x.fillText('체형',cx,ty+40);x.font=`700 ${type.length>4?40:50}px ${F}`;x.fillStyle=type==='표준형'?'#9BE22E':'#FF5A5A';x.fillText(type,cx,ty+104)}
+    else{x.font=`600 20px ${F}`;const a='체형  ',aw=x.measureText(a).width;x.font=`700 30px ${F}`;const bw2=x.measureText(type).width,sx=cx-(aw+bw2)/2;x.textAlign='left';x.fillStyle='#BFD3F2';x.font=`600 20px ${F}`;x.fillText(a,sx,ty+43);x.font=`700 30px ${F}`;x.fillStyle=type==='표준형'?'#9BE22E':'#FF5A5A';x.fillText(type,sx+aw,ty+44)}
+    x.textAlign='left'};
+  panel('BEFORE',d.before.date,vb,40,490);panel('AFTER',d.after.date,va,550,490);
+  const am=oy+20+300*sc;x.fillStyle='#9BE22E';x.beginPath();x.moveTo(530,am-20);x.lineTo(556,am);x.lineTo(530,am+20);x.closePath();x.fill();
+  // bar graph: within standard = green, only the part over the standard top turns red, a shortage shows as a dashed box
+  const gx=40,gy=pTop+pH+(tall?24:18),gw=1000,gh=H-(tall?62:46)-gy;
+  x.fillStyle='rgba(255,255,255,.07)';rr(x,gx,gy,gw,gh,22);x.fill();
+  x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?26:23}px ${F}`;x.fillText('체성분 변화 그래프',gx+28,gy+(tall?48:40));
+  x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('연두 = 표준  ·  빨강 = 넘친 만큼  ·  점선 칸 = 모자란 만큼',gx+28,gy+(tall?80:68));
+  const base=gy+gh-(tall?108:96),avail=base-(gy+(tall?120:100)),unit=avail/1.45,topY=base-unit,LOP=.55;
+  const sc2=(kk,v)=>{const [a,b]=BC_STD[kk];if(v<a)return Math.max(.15,LOP*(1-(a-v)/a*5));if(v>b)return Math.min(1.45,1+(v-b)/b*1.5);return LOP+(1-LOP)*(v-a)/(b-a)};
+  x.fillStyle='rgba(155,226,46,.08)';x.fillRect(gx+28,topY,gw-56,unit*(1-LOP));
+  x.setLineDash([8,7]);x.lineWidth=2;x.strokeStyle='rgba(255,255,255,.75)';x.beginPath();x.moveTo(gx+28,topY);x.lineTo(gx+gw-28,topY);x.stroke();
+  x.strokeStyle='rgba(255,255,255,.45)';x.beginPath();x.moveTo(gx+28,base-unit*LOP);x.lineTo(gx+gw-28,base-unit*LOP);x.stroke();x.setLineDash([]);
+  x.fillStyle='#BFD3F2';x.font=`600 16px ${F}`;x.fillText('기준 끝',gx+28,topY-8);x.fillText('기준 시작',gx+28,base-unit*LOP-8);
+  x.strokeStyle='rgba(255,255,255,.35)';x.beginPath();x.moveTo(gx+28,base);x.lineTo(gx+gw-28,base);x.stroke();
+  const gwid=(gw-138)/4,bw=tall?62:56;
+  BC_KEYS.forEach((kk,i)=>{const c0=gx+110+gwid*i+gwid/2;
+    [[vb,'비포',-1],[va,'애프터',1]].forEach(([v,t,sg])=>{const val=v[kk],s=bcSt(kk,val),bx=c0+sg*(bw/2+8)-bw/2;
+      const r=sc2(kk,val),h=r*unit,hb=Math.min(r,1)*unit;
+      x.fillStyle=s==='low'?BC_LOW[kk]:BC_COL.ok;rr(x,bx,base-hb,bw,hb,r>1?0:8);x.fill();
+      if(r>1){x.fillStyle=BC_COL.high;x.beginPath();x.moveTo(bx,base-hb);x.lineTo(bx,base-h+8);x.arcTo(bx,base-h,bx+8,base-h,8);x.lineTo(bx+bw-8,base-h);x.arcTo(bx+bw,base-h,bx+bw,base-h+8,8);x.lineTo(bx+bw,base-hb);x.closePath();x.fill()}
+      let hTop=h;if(r<LOP){const gt=base-LOP*unit,gh2=(LOP-r)*unit,cc=BC_LOW[kk];hTop=LOP*unit;
+        x.globalAlpha=.3;x.fillStyle=cc;x.fillRect(bx,gt,bw,gh2);x.globalAlpha=1;
+        x.setLineDash([6,5]);x.lineWidth=3;x.strokeStyle=cc;x.strokeRect(bx+1.5,gt+1.5,bw-3,gh2-3);x.setLineDash([]);
+        if(gh2>24){x.font=`700 16px ${F}`;x.fillStyle=cc;x.textAlign='center';x.fillText('부족',bx+bw/2,gt+gh2/2+6)}}
+      x.textAlign='center';x.font=`700 ${tall?21:19}px Sora, sans-serif`;const lt=val.toFixed(1),lw=x.measureText(lt).width+12;
+      x.fillStyle='#1B3866';rr(x,bx+bw/2-lw/2,base-hTop-34,lw,28,6);x.fill();x.fillStyle=r>1?'#FF7A7A':'#fff';x.fillText(lt,bx+bw/2,base-hTop-12);
+      x.font=`600 ${tall?18:16}px ${F}`;x.fillStyle='#BFD3F2';x.fillText(t,bx+bw/2,base+26)});
+    x.font=`700 ${tall?22:20}px ${F}`;x.fillStyle='#fff';x.textAlign='center';x.fillText(BC_NAMES[kk],c0,base+(tall?58:54));
+    // how much it changed (fat: down is good, the others: up is good)
+    const dd=Math.round((va[kk]-vb[kk])*10)/10,good=kk==='fat'?dd<0:dd>0;
+    x.font=`700 ${tall?22:19}px Sora, sans-serif`;x.fillStyle=dd===0?'#BFD3F2':good?'#9BE22E':'#FF7A7A';x.fillText(dd===0?'변화 없음':`${dd>0?'▲ +':'▼ '}${dd.toFixed(1)}%p`,c0,base+(tall?90:84))});
+  x.textAlign='center';x.fillStyle='#7F97BF';x.font=`500 ${tall?19:17}px ${F}`;x.fillText('왼쪽 반 = 기준 모양 · 오른쪽 반 = 측정 모양 · 몸무게 대비 비율 · 개인차가 있을 수 있습니다',W/2,H-(tall?26:18));x.textAlign='left';
+  watermark(x,W-56,gy+56+(tall?0:-6),tall?.9:.8);
+  return cv;
+}
+function bcData(c,sn){const r=sn||c;return{name:c.name,age:c.age,before:r.before,after:r.after}}
+function drawBCPreview(){const pv=$('#bcPreview'),c=active();if(!pv||!c)return;const ok=!bcMissing(c).length;pv.style.opacity=ok?1:.35;
+  if(!ok){pv.width=324;pv.height=S.bcRatio==='34'?432:576;const x=pv.getContext('2d');x.fillStyle='#0F3F86';x.fillRect(0,0,pv.width,pv.height);return}
+  const card=renderBC(bcData(c),S.bcRatio,.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
+
 
 /* ---------- pointer interaction on fixed frames ---------- */
 function bindFrames(){
@@ -1043,8 +1220,8 @@ function clientsSheet(){
 function snapModal(c,sn){
   const row=(l,f,u)=>sn.before[f]||sn.after[f]?`<tr><td>${l}</td><td class="num">${esc(sn.before[f]||'–')}</td><td class="num">${esc(sn.after[f]||'–')}</td><td class="num">${u}</td></tr>`:'';
   modal(`<h3>${new Date(sn.savedAt).toLocaleString('ko-KR',{dateStyle:'medium',timeStyle:'short'})} 저장</h3><img class="export-img" src="${thumbs[sn.id]||sn.thumb||''}" alt="저장된 비교 이미지">
-    <div class="mwrap"><table class="mtable" style="min-width:0"><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th></th></tr></thead><tbody>${row('측정일','date','')}${row('체중','weight','kg')}${row('체지방률','fat','%')}${row('골격근량','muscle','kg')}${row('내장지방','visceral','')}</tbody></table></div>
-    <div class="row"><button type="button" class="btn btn--danger" data-act="snap-del" data-id="${sn.id}">${ic('trash')}삭제</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">닫기</button></div>`);
+    <div class="mwrap"><table class="mtable" style="min-width:0"><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th></th></tr></thead><tbody>${row('측정일','date','')}${row('체중','weight','kg')}${row('체지방률','fat','%')}${row('골격근량','muscle','kg')}${row('내장지방','visceral','')}${row('체수분','water','L')}${row('단백질','protein','kg')}${row('무기질','mineral','kg')}</tbody></table></div>
+    <div class="row"><button type="button" class="btn btn--danger" data-act="snap-del" data-id="${sn.id}">${ic('trash')}삭제</button><span class="grow"></span>${bcVals(sn.before)&&bcVals(sn.after)?`<button type="button" class="btn btn--line" data-act="snap-bc" data-id="${sn.id}">체성분 그림</button>`:''}<button type="button" class="btn btn--line" data-act="close">닫기</button></div>`);
 }
 const PRO_PRICE='9,900원';
 const PRO_TITLE='내 브랜드를 알리는 비포·애프터';
@@ -1130,6 +1307,31 @@ async function exportCard(){
         const longPress=()=>{const t=sh.querySelector('.save-tip');if(!t)return;t.innerHTML="<b>여기서는 버튼 저장이 막혀 있어요.</b><br>위 사진을 <b>길게 누른 뒤 '사진 앱에 저장'</b>을 누르면 갤러리에 바로 들어가요.";t.classList.remove('is-flash');void t.offsetWidth;t.classList.add('is-flash');sh.querySelector('.export-img').scrollIntoView({behavior:'smooth',block:'center'})};
         if(dls){try{await dls.save({filename:fname,data:blob});toast("공유 창이 뜨면 '이미지 저장'을 누르세요")}catch(e){if(!e||e.code!=='declined')longPress()}return}
         // 3) desktop browsers
+        const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+        if(/iPhone|iPad|Android/i.test(navigator.userAgent))longPress();
+      });
+    });
+}
+
+// refresh only the 체성분 card's note/button while typing (no full re-render, so the input keeps focus)
+let bcT;function bcStatusSoon(){clearTimeout(bcT);bcT=setTimeout(()=>{const c=active(),sec=document.querySelector('[aria-label="체성분 비교 그림"]');if(!c||!sec)return;const miss=bcMissing(c),btn=sec.querySelector('[data-act="bc-export"]'),p=sec.querySelector('.empty-note');
+  if(btn)btn.disabled=!!miss.length;if(p)p.innerHTML=miss.length?`위 <b>수치 기록</b>에 아래 칸을 채우면 그림이 만들어져요.<br>${miss.map(esc).join('<br>')}`:'이름·나이·담당 코치·진행 기간이 함께 들어가요. 기록 저장을 누르면 이 고객 파일에 같이 저장돼요.'},150)}
+async function exportBC(c,sn){
+  if(mode){mode=null;renderMain()}
+  try{await document.fonts.ready}catch(e){}
+  const d=bcData(c,sn);if(!bcVals(d.before)||!bcVals(d.after)){toast('체성분 칸을 먼저 채워주세요');return}
+  const ratio=S.bcRatio==='34'?'34':'916',cv=renderBC(d,ratio,isPro()?4/3:1);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.94));const url=cv.toDataURL('image/jpeg',.94);
+  const fname=`bodylog_체성분_${(S.showName?c.name:maskName(c.name)).replace(/\*/g,'')}_${ratio==='916'?'9x16':'3x4'}.jpg`;
+  const isMob=/iPhone|iPad|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
+  modal(`<h3>체성분 비교 그림</h3>${isMob?`<p class="save-tip save-tip--main">👇 아래 그림을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img" src="${url}" alt="체성분 비교 그림">
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${ic('share')}갤러리에 저장</button></div>`,sh=>{
+      sh.querySelector('#dl').addEventListener('click',async()=>{
+        const file=new File([blob],fname,{type:'image/jpeg'});
+        try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
+        const dls=await getDownloads();
+        const longPress=()=>{const t=sh.querySelector('.save-tip');if(!t)return;t.innerHTML="<b>여기서는 버튼 저장이 막혀 있어요.</b><br>위 그림을 <b>길게 누른 뒤 '사진 앱에 저장'</b>을 누르면 갤러리에 바로 들어가요.";t.classList.remove('is-flash');void t.offsetWidth;t.classList.add('is-flash');sh.querySelector('.export-img').scrollIntoView({behavior:'smooth',block:'center'})};
+        if(dls){try{await dls.save({filename:fname,data:blob});toast("공유 창이 뜨면 '이미지 저장'을 누르세요")}catch(e){if(!e||e.code!=='declined')longPress()}return}
         const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
         if(/iPhone|iPad|Android/i.test(navigator.userAgent))longPress();
       });
@@ -1225,7 +1427,7 @@ document.addEventListener('click',async e=>{
       S.clients=S.clients.filter(x=>x.id!==c.id);S.activeId=S.clients[0]?.id||null;mode=null;closeModal();await persist();renderAll();toast(`${name} 고객을 삭제했습니다`);break}
     case 'save':{if(mode)mode=null;try{await document.fonts.ready}catch(e){}
       const thumb=renderCard(.36).toDataURL('image/jpeg',.82);
-      const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral}};
+      const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral,water:c.before.water||'',protein:c.before.protein||'',mineral:c.before.mineral||''},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral,water:c.after.water||'',protein:c.after.protein||'',mineral:c.after.mineral||''}};
       thumbs[snap.id]=thumb;await DB.set('thumb:'+snap.id,thumb);delete snap.thumb;
       const drop=(c.history||[]).slice(29);drop.forEach(h=>{DB.del('thumb:'+h.id);delete thumbs[h.id]});
       c.history=[snap,...(c.history||[])].slice(0,30);touch(c);
@@ -1258,6 +1460,9 @@ document.addEventListener('click',async e=>{
     case 'opt-name':S.showName=!S.showName;markDirty();renderMain();break;
     case 'opt-nums':S.showNums=!S.showNums;markDirty();renderMain();break;
     case 'export':exportCard();break;
+    case 'bc-ratio':S.bcRatio=b.dataset.v;markDirty();document.querySelectorAll('[data-act="bc-ratio"]').forEach(x=>x.classList.toggle('is-on',x.dataset.v===S.bcRatio));drawBCPreview();break;
+    case 'bc-export':exportBC(c);break;
+    case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
     case 'pro-on':S.plan='premium';markDirty();premiumSheet();renderMain();toast('프리미엄을 미리 써보는 중이에요');break;
     case 'pro-off':S.plan='free';markDirty();closeModal();renderMain();toast('무료 버전으로 돌아왔어요');break;
@@ -1292,8 +1497,8 @@ document.addEventListener('input',e=>{
   if(t.dataset.field&&c){
     if(t.dataset.field==='memo'){c.memo=t.value}
     else{const k=t.dataset.side,f=t.dataset.field;c[k][f]=f==='date'?t.value:t.value.replace(/[^0-9.]/g,'');
-      if(f!=='date'){const m=METRICS.find(x=>x[0]===f);const cell=document.querySelector(`[data-delta="${f}"]`);if(cell)cell.innerHTML=deltaCell(c.before[f],c.after[f],m[4],m[3])}}
-    touch(c);drawPreviewSoon();
+      if(f!=='date'){const m=METRICS.find(x=>x[0]===f)||BCM.find(x=>x[0]===f);const cell=document.querySelector(`[data-delta="${f}"]`);if(cell)cell.innerHTML=deltaCell(c.before[f],c.after[f],m[4],m[3])}}
+    touch(c);drawPreviewSoon();if(t.dataset.field!=='memo')bcStatusSoon();
   }
 });
 document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.field==='date')renderMain()});
