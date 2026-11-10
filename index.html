@@ -182,7 +182,28 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .memo:focus{border-color:var(--accent);background:var(--surface)}
 
 /* share */
-.mtable tr.bc-sub td{text-align:left!important;padding-top:14px;font-weight:700;color:var(--ink)}.mtable tr.bc-sub small{font-weight:500;color:var(--muted);margin-left:6px}
+.bc-card{background:linear-gradient(170deg,#12458F,#0A2552);color:#fff;border:0;box-shadow:var(--shadow)}
+.bc-card .label{color:#9FB8DE}.bc-card .card__head p{color:#BFD3F2}
+.bc-grid{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px;align-items:start}
+@media (max-width:560px){.bc-grid{grid-template-columns:minmax(0,1fr)}}
+.bc-sum{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.bc-row{display:grid;grid-template-columns:52px minmax(0,1fr) 12px minmax(0,1fr) 54px;align-items:center;gap:6px;background:rgba(255,255,255,.07);border-radius:12px;padding:8px 10px}
+.bc-row b{font-size:13.5px;white-space:nowrap}.bc-row .arr{color:#7F97BF;text-align:center}
+.bc-chip{display:flex;align-items:center;justify-content:space-between;gap:3px;border-radius:9px;padding:5px 7px;font:700 13.5px/1.2 var(--font-num);color:#0B1D33;white-space:nowrap;min-width:0}
+.bc-chip small{font:700 10.5px/1 var(--font-body);white-space:nowrap}
+.bc-chip.high{color:#fff}.bc-chip.none{background:rgba(255,255,255,.12);color:#9FB8DE;justify-content:center}
+.bc-d{text-align:right;font:700 13px var(--font-num);white-space:nowrap}.bc-d.good{color:#9BE22E}.bc-d.bad{color:#FF8A8A}.bc-d.none{color:#7F97BF}
+.bc-head{display:grid;grid-template-columns:52px minmax(0,1fr) 12px minmax(0,1fr) 54px;gap:6px;padding:0 10px;font:700 11px var(--font-num);letter-spacing:.1em;color:#9FB8DE}
+.bc-head span:nth-child(2),.bc-head span:nth-child(4){text-align:center}.bc-head span:last-child{text-align:right}
+.bc-type{display:flex;gap:8px;margin:0 0 14px}.bc-type span{flex:1;text-align:center;background:rgba(0,0,0,.2);border-radius:12px;padding:8px 6px;font-size:12px;color:#BFD3F2}.bc-type b{display:block;font-size:16px;margin-top:2px}
+.bc-card .lseg{background:rgba(255,255,255,.08);border-color:transparent}.bc-card .lseg button{color:#BFD3F2}.bc-card .lseg button small{color:#7F97BF}.bc-card .lseg button.is-on{background:#fff;color:#0A2552}.bc-card .lseg button.is-on small{color:#4D6A99}
+.bc-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bc-card .btn--line{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
+.bc-card .btn--lime{background:#9BE22E;color:#14250A}.bc-card .btn[disabled]{opacity:.45;pointer-events:none}
+.bc-pv{width:100%;border-radius:14px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:zoom-in}
+@media (max-width:560px){.bc-pv{max-width:230px;margin:0 auto}}
+.bc-empty{background:rgba(255,255,255,.07);border-radius:14px;padding:16px;font-size:13.5px;line-height:1.6;color:#DCE7F7;margin-bottom:12px}.bc-empty b{color:#fff}
+.bcform td:first-child{white-space:nowrap}
 .share{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:18px;align-items:start}
 @media (max-width:520px){.share{grid-template-columns:minmax(0,1fr)}.share canvas{max-width:200px;margin:0 auto}}
 .share canvas{width:100%;border-radius:12px;display:block;border:1px solid var(--line);background:#111416}
@@ -785,8 +806,6 @@ function renderMain(){
       <div class="mwrap"><table class="mtable"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><thead><tr><th></th><th>BEFORE</th><th>AFTER</th><th>변화</th></tr></thead><tbody>
         <tr><td>측정일</td>${sides.map(([k])=>`<td><label class="field"><input type="date" id="date-${k}" data-field="date" data-side="${k}" value="${esc(c[k].date)}" aria-label="${k} 측정일"></label></td>`).join('')}<td><span class="delta ${per?'':'none'} num">${per||'–'}</span></td></tr>
         ${METRICS.map(([f,lab,u,low,du])=>`<tr><td>${lab}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" id="${f}-${k}" data-field="${f}" data-side="${k}" value="${esc(c[k][f])}" placeholder="0.0" aria-label="${k} ${lab}"><small>${u}</small></label></td>`).join('')}<td data-delta="${f}">${deltaCell(c.before[f],c.after[f],du,low)}</td></tr>`).join('')}
-        <tr class="bc-sub"><td colspan="4">체성분 그림용 <small>인바디 결과지 숫자 그대로</small></td></tr>
-        ${BCM.map(([f,lab,u,low,du])=>`<tr><td>${lab}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" id="${f}-${k}" data-field="${f}" data-side="${k}" value="${esc(c[k][f]||'')}" placeholder="0.0" aria-label="${k} ${lab}"><small>${u}</small></label></td>`).join('')}<td data-delta="${f}">${deltaCell(c.before[f],c.after[f],du,low)}</td></tr>`).join('')}
       </tbody></table></div>
       <div style="margin-top:16px"><span class="label">코칭 메모</span><textarea class="memo" id="memo" data-field="memo" placeholder="식단, 운동, 상담 내용을 적어두세요">${esc(c.memo||'')}</textarea></div>
     </section>
@@ -812,20 +831,7 @@ function renderMain(){
     </section>
   </div>
 
-  <section class="card" aria-label="체성분 비교 그림">
-    <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>왼쪽 반은 기준 모양, 오른쪽 반은 측정 모양이에요</p></div>
-    <div class="share">
-      <div>
-        <div class="lseg" role="group" aria-label="체성분 그림 사이즈">
-          <button type="button" data-act="bc-ratio" data-v="916" class="${S.bcRatio!=='34'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
-          <button type="button" data-act="bc-ratio" data-v="34" class="${S.bcRatio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
-        </div>
-        ${bcMissing(c).length?`<p class="empty-note" style="margin:12px 0">위 <b>수치 기록</b>에 아래 칸을 채우면 그림이 만들어져요.<br>${bcMissing(c).map(esc).join('<br>')}</p>`:`<p class="empty-note" style="margin:12px 0">이름·나이·담당 코치·진행 기간이 함께 들어가요. 기록 저장을 누르면 이 고객 파일에 같이 저장돼요.</p>`}
-        <button type="button" class="btn btn--primary" style="width:100%" data-act="bc-export" ${bcMissing(c).length?'disabled':''}>${ic('share')}체성분 그림 만들기</button>
-      </div>
-      <canvas id="bcPreview" aria-label="체성분 그림 미리보기"></canvas>
-    </div>
-  </section>
+  ${bcCardHTML(c)}
 
   <section class="card" aria-label="고객 파일">
     <div class="card__head"><div><span class="label">Client file</span><h2>저장된 비교 기록 <small class="num" style="color:var(--muted);font-weight:500">${(c.history||[]).length}</small></h2></div><p>기록 저장을 누를 때마다 이 고객 파일에 쌓입니다</p></div>
@@ -1123,10 +1129,57 @@ function renderBC(d,ratio,scale=1){
   watermark(x,W-56,gy+56+(tall?0:-6),tall?.9:.8);
   return cv;
 }
+// one item as % of body weight (fat = 체지방률), or null
+function bcOne(r,k){if(k==='fat'){const f=parseFloat(r.fat);return isNaN(f)?null:f}const w=parseFloat(r.weight),n=parseFloat(r[k]);return w>0&&n>0?Math.round(n/w*1000)/10:null}
+function bcCardHTML(c){
+  const miss=bcMissing(c),ok=!miss.length;
+  const chip=(k,v)=>{if(v==null)return '<span class="bc-chip none">–</span>';const s=bcSt(k,v);return `<span class="bc-chip ${s}" style="background:${bcCol(k,s)}">${v.toFixed(1)}%<small>${BC_STXT[s]}</small></span>`};
+  const rows=BC_KEYS.map(k=>{const a=bcOne(c.before,k),b=bcOne(c.after,k);let d='<span class="bc-d none">–</span>';
+    if(a!=null&&b!=null){const dd=Math.round((b-a)*10)/10,good=k==='fat'?dd<0:dd>0;d=`<span class="bc-d ${dd===0?'none':good?'good':'bad'}">${dd>0?'+':''}${dd.toFixed(1)}%p</span>`}
+    return `<div class="bc-row"><b>${BC_NAMES[k]}</b>${chip(k,a)}<span class="arr">→</span>${chip(k,b)}${d}</div>`}).join('');
+  const vb=bcVals(c.before),va=bcVals(c.after);
+  return `<section class="card bc-card" aria-label="체성분 비교 그림">
+    <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>인바디 결과를 사람 모양과 그래프로 보여줘요</p></div>
+    <div class="bc-grid">
+      <div>
+        ${ok?'':`<div class="bc-empty"><b>인바디 결과지 숫자 5개</b>만 넣으면 그림이 바로 만들어져요.<br><small>${miss.length===2&&BCM.every(([f])=>!c.before[f]&&!c.after[f])&&!c.before.weight&&!c.after.weight?'BEFORE·AFTER 각각 체중 · 체지방률 · 체수분 · 단백질 · 무기질':'아직 빈 칸: '+miss.map(esc).join(' / ')}</small></div>`}
+        <div class="bc-head"><span></span><span>BEFORE</span><span></span><span>AFTER</span><span>변화</span></div>
+        <div class="bc-sum">${rows}</div>
+        ${vb&&va?`<div class="bc-type"><span>BEFORE 체형<b style="color:${bcType(vb)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(vb)}</b></span><span>AFTER 체형<b style="color:${bcType(va)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(va)}</b></span></div>`:''}
+        <div class="lseg" role="group" aria-label="체성분 그림 사이즈">
+          <button type="button" data-act="bc-ratio" data-v="916" class="${S.bcRatio!=='34'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
+          <button type="button" data-act="bc-ratio" data-v="34" class="${S.bcRatio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
+        </div>
+        <div class="bc-btns">
+          <button type="button" class="btn btn--line" data-act="bc-input">${ic('edit')}${ok?'인바디 숫자 고치기':'인바디 숫자 넣기'}</button>
+          <button type="button" class="btn btn--lime" data-act="bc-export" ${ok?'':'disabled'}>${ic('share')}체성분 그림 만들기 · 저장</button>
+        </div>
+      </div>
+      <canvas id="bcPreview" class="bc-pv" data-act="bc-export" aria-label="체성분 그림 미리보기 (누르면 크게 보기)"></canvas>
+    </div>
+  </section>`;
+}
+// one sheet to type the InBody numbers for BEFORE and AFTER
+function bcForm(c){
+  const F=[['weight','체중','kg'],['fat','체지방률','%'],['water','체수분','L'],['protein','단백질','kg'],['mineral','무기질','kg']];
+  modal(`<h3>인바디 숫자 넣기</h3><p style="margin:-6px 0 0;color:var(--muted);font-size:13px">인바디 결과지 <b>체성분분석</b> 칸의 숫자를 그대로 넣어주세요. 체중·체지방률은 수치 기록과 같은 칸이에요.</p>
+    <div class="mwrap"><table class="mtable bcform"><colgroup><col class="c1"><col><col></colgroup><thead><tr><th></th><th>BEFORE</th><th style="text-align:left">AFTER</th></tr></thead><tbody>
+    ${F.map(([f,l,u])=>`<tr><td>${l}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" data-bcf="${f}" data-side="${k}" value="${esc(c[k][f]||'')}" placeholder="0.0" aria-label="${k} ${l}"><small>${u}</small></label></td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">취소</button><button type="button" class="btn btn--primary" id="bcSave">${ic('check')}넣기</button></div>`,sh=>{
+      sh.querySelectorAll('[data-bcf]').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/[^0-9.]/g,'')}));
+      sh.querySelector('#bcSave').addEventListener('click',async()=>{const t=active();if(!t)return;
+        sh.querySelectorAll('[data-bcf]').forEach(i=>{t[i.dataset.side][i.dataset.bcf]=i.value});
+        touch(t);await persist();closeModal();renderMain();
+        toast(bcMissing(t).length?'저장했어요. 빈 칸을 채우면 그림이 만들어져요':'체성분 그림이 준비됐어요');
+        const sec=document.querySelector('.bc-card');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'})});
+    });
+}
 function bcData(c,sn){const r=sn||c;return{name:c.name,age:c.age,before:r.before,after:r.after}}
 function drawBCPreview(){const pv=$('#bcPreview'),c=active();if(!pv||!c)return;const ok=!bcMissing(c).length;pv.style.opacity=ok?1:.35;
-  if(!ok){pv.width=324;pv.height=S.bcRatio==='34'?432:576;const x=pv.getContext('2d');x.fillStyle='#0F3F86';x.fillRect(0,0,pv.width,pv.height);return}
-  const card=renderBC(bcData(c),S.bcRatio,.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
+  // not filled in yet: show a faded example so the coach sees what they will get
+  const ex={name:c.name,age:c.age,before:{date:c.before.date,weight:'72.4',fat:'34.2',water:'33.4',protein:'8.5',mineral:'2.4'},after:{date:c.after.date,weight:'68.8',fat:'27.5',water:'37.9',protein:'9.9',mineral:'3.1'}};
+  const card=renderBC(ok?bcData(c):ex,S.bcRatio,.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
 
 
 /* ---------- pointer interaction on fixed frames ---------- */
@@ -1314,8 +1367,7 @@ async function exportCard(){
 }
 
 // refresh only the 체성분 card's note/button while typing (no full re-render, so the input keeps focus)
-let bcT;function bcStatusSoon(){clearTimeout(bcT);bcT=setTimeout(()=>{const c=active(),sec=document.querySelector('[aria-label="체성분 비교 그림"]');if(!c||!sec)return;const miss=bcMissing(c),btn=sec.querySelector('[data-act="bc-export"]'),p=sec.querySelector('.empty-note');
-  if(btn)btn.disabled=!!miss.length;if(p)p.innerHTML=miss.length?`위 <b>수치 기록</b>에 아래 칸을 채우면 그림이 만들어져요.<br>${miss.map(esc).join('<br>')}`:'이름·나이·담당 코치·진행 기간이 함께 들어가요. 기록 저장을 누르면 이 고객 파일에 같이 저장돼요.'},150)}
+let bcT;function bcStatusSoon(){clearTimeout(bcT);bcT=setTimeout(()=>{const c=active(),sec=document.querySelector('.bc-card');if(!c||!sec)return;const t=document.createElement('div');t.innerHTML=bcCardHTML(c);sec.replaceWith(t.firstElementChild);drawBCPreview()},250)}
 async function exportBC(c,sn){
   if(mode){mode=null;renderMain()}
   try{await document.fonts.ready}catch(e){}
@@ -1461,7 +1513,8 @@ document.addEventListener('click',async e=>{
     case 'opt-nums':S.showNums=!S.showNums;markDirty();renderMain();break;
     case 'export':exportCard();break;
     case 'bc-ratio':S.bcRatio=b.dataset.v;markDirty();document.querySelectorAll('[data-act="bc-ratio"]').forEach(x=>x.classList.toggle('is-on',x.dataset.v===S.bcRatio));drawBCPreview();break;
-    case 'bc-export':exportBC(c);break;
+    case 'bc-export':if(bcMissing(c).length){bcForm(c);break}exportBC(c);break;
+    case 'bc-input':bcForm(c);break;
     case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
     case 'pro-on':S.plan='premium';markDirty();premiumSheet();renderMain();toast('프리미엄을 미리 써보는 중이에요');break;
