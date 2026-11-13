@@ -182,6 +182,7 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .memo:focus{border-color:var(--accent);background:var(--surface)}
 
 /* share */
+.sexseg label{flex:1;position:relative;cursor:pointer}.sexseg input{position:absolute;opacity:0;pointer-events:none}.sexseg span{display:flex;align-items:center;justify-content:center;height:40px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}.sexseg input:checked+span{background:var(--surface);box-shadow:var(--shadow);color:var(--ink)}
 .bc-card{background:linear-gradient(170deg,#12458F,#0A2552);color:#fff;border:0;box-shadow:var(--shadow)}
 .bc-card .label{color:#9FB8DE}.bc-card .card__head p{color:#BFD3F2}
 .bc-grid{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px;align-items:start}
@@ -980,7 +981,9 @@ function drawPreview(){const pv=$('#preview');if(!pv||!active())return;const car
 const BCM=[['water','체수분','L',false,'L'],['protein','단백질','kg',false,'kg'],['mineral','무기질','kg',false,'kg']];
 const BC_KEYS=['mineral','protein','fat','water'];
 const BC_NAMES={water:'체수분',protein:'단백질',mineral:'무기질',fat:'체지방'};
-const BC_STD={mineral:[3.5,5.0],protein:[12.0,16.0],fat:[18.0,28.0],water:[50.0,60.0]};
+// standard ranges (% of body weight) by sex; female is the original set. Picked per client before drawing.
+const BC_STDS={f:{mineral:[3.5,5.0],protein:[12.0,16.0],fat:[18.0,28.0],water:[50.0,60.0]},m:{mineral:[4.0,5.5],protein:[14.0,18.0],fat:[10.0,20.0],water:[55.0,65.0]}};
+let BC_STD=BC_STDS.f;const bcUse=sex=>{BC_STD=BC_STDS[sex==='m'?'m':'f']};const sexLabel=sex=>sex==='m'?'남성':'여성';
 const BC_COL={ok:'#9BE22E',high:'#FF3B3B'};
 // each shortage has its own colour; too little body fat (weak, very thin) is pale sky blue
 const BC_LOW={mineral:'#B48CFF',protein:'#FFD23F',water:'#3D9BFF',fat:'#CDEFFF'};
@@ -1058,6 +1061,7 @@ function bcBody(x,cx,oy,v,sc){
 }
 // d = {name, age, before:{date,weight,fat,water,protein,mineral}, after:{…}}; ratio '916' (1080×1920) or '34' (1080×1440)
 function renderBC(d,ratio,scale=1){
+  bcUse(d.sex);
   const W=1080,tall=ratio!=='34',H=tall?1920:1440,F='"IBM Plex Sans KR", sans-serif';
   const cv=mk(W*scale,H*scale),x=cv.getContext('2d');x.scale(scale,scale);x.textBaseline='alphabetic';
   const vb=bcVals(d.before),va=bcVals(d.after);
@@ -1072,7 +1076,7 @@ function renderBC(d,ratio,scale=1){
     x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillStyle='#9BE22E';x.font=`700 30px ${F}`;const uw=x.measureText('일째').width;x.fillText('일째',W-50,h2y+8);
     x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillText(String(days),W-58-uw,h2y+8);x.textAlign='left'}
   const iy=h2y+(tall?54:46);
-  x.fillStyle='#BFD3F2';x.font=`500 26px ${F}`;x.fillText(`${S.showName?d.name:maskName(d.name)} 님 · ${d.age?d.age+'세 · ':''}담당 ${isPro()?(S.coach||'핏코치'):'핏코치'} · 체성분 비교`,50,iy);
+  x.fillStyle='#BFD3F2';x.font=`500 26px ${F}`;x.fillText(`${S.showName?d.name:maskName(d.name)} 님 · ${d.age?d.age+'세 · ':''}${sexLabel(d.sex)} · 담당 ${isPro()?(S.coach||'핏코치'):'핏코치'} · 체성분 비교`,50,iy);
   // two panels: half standard / half measured figure
   const sc=tall?.92:.64,k=tall?1:.82,oy=iy+(tall?128:110),pTop=oy-90,bodyH=720*sc,typeH=tall?130:64,pH=90+20+bodyH+50+typeH+(tall?34:22);
   const LY={mineral:60,protein:180,fat:335,water:560};
@@ -1132,6 +1136,7 @@ function renderBC(d,ratio,scale=1){
 // one item as % of body weight (fat = 체지방률), or null
 function bcOne(r,k){if(k==='fat'){const f=parseFloat(r.fat);return isNaN(f)?null:f}const w=parseFloat(r.weight),n=parseFloat(r[k]);return w>0&&n>0?Math.round(n/w*1000)/10:null}
 function bcCardHTML(c){
+  bcUse(c.sex);
   const miss=bcMissing(c),ok=!miss.length;
   const chip=(k,v)=>{if(v==null)return '<span class="bc-chip none">–</span>';const s=bcSt(k,v);return `<span class="bc-chip ${s}" style="background:${bcCol(k,s)}">${v.toFixed(1)}%<small>${BC_STXT[s]}</small></span>`};
   const rows=BC_KEYS.map(k=>{const a=bcOne(c.before,k),b=bcOne(c.after,k);let d='<span class="bc-d none">–</span>';
@@ -1139,7 +1144,7 @@ function bcCardHTML(c){
     return `<div class="bc-row"><b>${BC_NAMES[k]}</b>${chip(k,a)}<span class="arr">→</span>${chip(k,b)}${d}</div>`}).join('');
   const vb=bcVals(c.before),va=bcVals(c.after);
   return `<section class="card bc-card" aria-label="체성분 비교 그림">
-    <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>인바디 결과를 사람 모양과 그래프로 보여줘요</p></div>
+    <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>인바디 결과를 사람 모양과 그래프로 보여줘요 · <b style="color:#fff">${sexLabel(c.sex)} 기준</b> <button type="button" data-act="edit-client" style="color:#9BE22E;font-weight:600;text-decoration:underline">바꾸기</button></p></div>
     <div class="bc-grid">
       <div>
         ${ok?'':`<div class="bc-empty"><b>인바디 결과지 숫자 5개</b>만 넣으면 그림이 바로 만들어져요.<br><small>${miss.length===2&&BCM.every(([f])=>!c.before[f]&&!c.after[f])&&!c.before.weight&&!c.after.weight?'BEFORE·AFTER 각각 체중 · 체지방률 · 체수분 · 단백질 · 무기질':'아직 빈 칸: '+miss.map(esc).join(' / ')}</small></div>`}
@@ -1175,10 +1180,10 @@ function bcForm(c){
         const sec=document.querySelector('.bc-card');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'})});
     });
 }
-function bcData(c,sn){const r=sn||c;return{name:c.name,age:c.age,before:r.before,after:r.after}}
+function bcData(c,sn){const r=sn||c;return{name:c.name,age:c.age,sex:c.sex,before:r.before,after:r.after}}
 function drawBCPreview(){const pv=$('#bcPreview'),c=active();if(!pv||!c)return;const ok=!bcMissing(c).length;pv.style.opacity=ok?1:.35;
   // not filled in yet: show a faded example so the coach sees what they will get
-  const ex={name:c.name,age:c.age,before:{date:c.before.date,weight:'72.4',fat:'34.2',water:'33.4',protein:'8.5',mineral:'2.4'},after:{date:c.after.date,weight:'68.8',fat:'27.5',water:'37.9',protein:'9.9',mineral:'3.1'}};
+  const ex={name:c.name,age:c.age,sex:c.sex,before:{date:c.before.date,weight:'72.4',fat:'34.2',water:'33.4',protein:'8.5',mineral:'2.4'},after:{date:c.after.date,weight:'68.8',fat:'27.5',water:'37.9',protein:'9.9',mineral:'3.1'}};
   const card=renderBC(ok?bcData(c):ex,S.bcRatio,.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
 
 
@@ -1232,6 +1237,7 @@ function clientForm(c){
     <form id="clientForm" style="display:flex;flex-direction:column;gap:12px">
       <label class="form-field">이름<input id="f-name" maxlength="30" value="${c.sample?'':esc(c.name)}" placeholder="예: 김민지"></label>
       <label class="form-field">나이 <small style="color:var(--muted);font-weight:500">(공유 이미지에 표시돼요, 비워도 돼요)</small><input id="f-age" inputmode="numeric" maxlength="3" value="${esc(c.age||'')}" placeholder="예: 52"></label>
+      <div class="form-field">성별 <small style="color:var(--muted);font-weight:500">(체성분 기준치가 달라져요)</small><div class="lseg sexseg"><label><input type="radio" name="f-sex" value="f" ${c.sex!=='m'?'checked':''}><span>여성</span></label><label><input type="radio" name="f-sex" value="m" ${c.sex==='m'?'checked':''}><span>남성</span></label></div></div>
       <label class="form-field">전화번호<input id="f-phone" inputmode="tel" maxlength="20" value="${esc(c.phone)}" placeholder="010-0000-0000"></label>
       <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;cursor:pointer"><input type="checkbox" id="f-consent" ${c.consent?'checked':''} style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent)"><span><b>사진 활용 동의 받음</b><br><small style="color:var(--muted)">얼굴을 가린 비포·애프터 사진을 SNS·홍보에 쓰는 것에 고객이 동의했어요</small></span></label>
       <p id="f-err" style="margin:0;color:var(--danger);font-size:13px" hidden>이름을 입력해주세요.</p>
@@ -1253,11 +1259,11 @@ function clientForm(c){
         if(!isNew){const err=sh.querySelector('#f-err');err.hidden=!hit;if(hit)err.textContent=`${hit.name} 고객이 이미 이 번호를 사용 중입니다.`}
       });
       sh.querySelector('#clientForm').addEventListener('submit',e=>{e.preventDefault();
-        const age=(sh.querySelector('#f-age').value.match(/\d+/)||[''])[0].slice(0,3),name=sh.querySelector('#f-name').value.trim(),phone=sh.querySelector('#f-phone').value.trim(),consent=sh.querySelector('#f-consent').checked;
+        const sex=sh.querySelector('input[name=f-sex]:checked')?.value==='m'?'m':'f',age=(sh.querySelector('#f-age').value.match(/\d+/)||[''])[0].slice(0,3),name=sh.querySelector('#f-name').value.trim(),phone=sh.querySelector('#f-phone').value.trim(),consent=sh.querySelector('#f-consent').checked;
         if(!name){const er=sh.querySelector('#f-err');er.textContent='이름을 입력해주세요.';er.hidden=false;return}
         if(findByPhone(phone,isNew?null:active().id))return;
-        if(isNew){const n={id:uid(),name,age,phone,consent:consent?Date.now():0,memo:'',history:[],createdAt:Date.now(),updatedAt:Date.now(),before:blankRec(),after:blankRec()};S.clients.push(n);S.activeId=n.id;mode=null;toast(`${name} 고객을 등록했습니다`)}
-        else{const t=active();t.name=name;t.age=age;t.phone=phone;t.consent=consent?(t.consent||Date.now()):0;touch(t);toast('고객 정보를 저장했습니다')}
+        if(isNew){const n={id:uid(),name,age,sex,phone,consent:consent?Date.now():0,memo:'',history:[],createdAt:Date.now(),updatedAt:Date.now(),before:blankRec(),after:blankRec()};S.clients.push(n);S.activeId=n.id;mode=null;toast(`${name} 고객을 등록했습니다`)}
+        else{const t=active();t.name=name;t.age=age;t.sex=sex;t.phone=phone;t.consent=consent?(t.consent||Date.now()):0;touch(t);toast('고객 정보를 저장했습니다')}
         markDirty();closeModal();renderAll();
       });
     });
