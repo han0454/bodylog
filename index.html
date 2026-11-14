@@ -1765,8 +1765,8 @@ async function openAccount(acc,{coachName}={}){
   ACC=acc;S={coach:'코치',club:'핏코치',plan:'free',wmText:'',wmOff:false,activeId:null,face:true,ratio:'916',showName:false,showNums:true,clients:[]};mode=null;query='';
   let saved=null;try{const raw=await DB.get('state:'+acc.id);if(raw)saved=JSON.parse(raw)}catch(e){}
   if(saved&&Array.isArray(saved.clients))S={...S,...saved};
-  TRIAL=false;trialBar();if(!isPaid())stripTrialErase();
   else{const sm=makeSample();S.clients=[sm];S.activeId=sm.id;S.coach=coachName||'코치';await persist()}
+  TRIAL=false;trialBar();if(!isPaid())stripTrialErase();
   if(S.activeId&&!active())S.activeId=null;
   S.clients.forEach(c=>{if(c.sample&&c.name&&c.name!=='예시 고객')c.sample=false});
   {const c=active();if(c)await Promise.all([ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)])}
