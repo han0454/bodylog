@@ -1129,9 +1129,9 @@ const BC_KG={m:{water:.62,protein:.166,mineral:.0573},f:{water:.55,protein:.147,
 let BC_STD=BC_STDS.f;const bcUse=(sex,height)=>{const g=sex==='m'?'m':'f',h=parseFloat(height)/100;BC_STD={...BC_STDS[g]};
   if(h>1&&h<2.3){const sw=h*h*(g==='m'?22:21);for(const k of ['water','protein','mineral']){const m=sw*BC_KG[g][k],d=10;BC_STD[k]=[Math.round(m*.9*d)/d,Math.round(m*1.1*d)/d]}}};
 const bcUnit=k=>k==='fat'?'%':k==='water'?'L':'kg',bcDU=k=>k==='fat'?'%p':bcUnit(k);const sexLabel=sex=>sex==='m'?'남성':'여성';
-const BC_COL={ok:'#9BE22E',mid:'#FFB067',plus:'#FF9ECF',high:'#FF3B3B'}; // ok=기준(초록), plus=충분(분홍, 체지방 제외)
+const BC_COL={ok:'#4FE3C1',mid:'#FFB067',plus:'#9BE22E',high:'#FF3B3B'}; // ok=기준(민트), plus=충분(초록, 체지방 제외)
 // each shortage has its own colour; too little body fat (weak, very thin) is pale sky blue
-const BC_LOW={mineral:'#B48CFF',protein:'#FFD23F',water:'#3D9BFF',fat:'#CDEFFF'};
+const BC_LOW={mineral:'#6CC6FF',protein:'#6CC6FF',water:'#6CC6FF',fat:'#6CC6FF'}; // 부족 = 하늘색 (모든 항목)
 const BC_STXT={low:'부족',mid:'낮음',ok:'기준',high:'과다',plus:'충분'};
 // lower half of the standard range counts as 낮음 (needs a push up), except body fat
 const bcMid=k=>Math.round((BC_STD[k][0]+BC_STD[k][1])/2*10)/10;
@@ -1251,7 +1251,7 @@ function renderBC(d,ratio,scale=1){
   const gx=40,gy=pTop+pH+(tall?24:18),gw=1000,gh=H-(tall?62:46)-gy;
   x.fillStyle='rgba(255,255,255,.07)';rr(x,gx,gy,gw,gh,22);x.fill();
   x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?26:23}px ${F}`;x.fillText('체성분 변화 그래프',gx+28,gy+(tall?48:40));
-  x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('주황 = 낮음  ·  초록 = 기준  ·  분홍 = 충분  ·  빨강 = 과다  ·  점선 = 모자람',gx+28,gy+(tall?80:68));
+  x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('하늘 = 부족  ·  주황 = 낮음  ·  민트 = 기준  ·  초록 = 충분  ·  빨강 = 과다',gx+28,gy+(tall?80:68));
   const base=gy+gh-(tall?108:96),avail=base-(gy+(tall?120:100)),unit=avail/1.45,topY=base-unit,LOP=.55;
   const sc2=(kk,v)=>{const [a,b]=BC_STD[kk];if(v<a)return Math.max(.15,LOP*(1-(a-v)/a*5));if(v>b)return Math.min(1.45,1+(v-b)/b*1.5);return LOP+(1-LOP)*(v-a)/(b-a)};
   x.fillStyle='rgba(155,226,46,.08)';x.fillRect(gx+28,topY,gw-56,unit*(1-LOP));
