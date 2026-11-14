@@ -406,6 +406,7 @@ const DB={db:null,
   async open(){try{this.db=await new Promise((res,rej)=>{const r=indexedDB.open('bodylog',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}catch(e){this.db=null}},
   get(k){return new Promise(res=>{if(!this.db)return res(undefined);try{const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(undefined)}catch(e){res(undefined)}})},
   set(k,v){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)}catch(e){res(false)}})},
+  keys(){return new Promise(res=>{if(!this.db)return res([]);try{const q=this.db.transaction('kv').objectStore('kv').getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])}catch(e){res([])}})},
   del(k){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)}catch(e){res(false)}})}
 };
 
@@ -1479,7 +1480,8 @@ function coachForm(){
     <p style="margin:0;color:var(--muted);font-size:13px">${ACC&&ACC.demo?'둘러보기 모드 (가입 전)':'로그인: '+esc(ACC?ACC.email:'')}</p>
     ${ACC&&!ACC.demo?'<div class="row" style="gap:14px"><button type="button" class="linkbtn" data-act="pin-change">비밀번호 바꾸기</button><button type="button" class="linkbtn" style="color:var(--danger)" data-act="acct-delete">회원 탈퇴</button></div>':''}
     <div style="background:var(--accent-soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">기록 백업</b><small style="color:var(--muted);line-height:1.5">고객 사진·수치·저장 기록을 파일 하나로 보관해요. 휴대폰을 바꾸거나 앱을 지워도 이 파일로 되살릴 수 있어요.</small>
-      <div class="row" style="gap:8px"><button type="button" class="btn btn--line btn--sm" data-act="backup">${ic('share')}백업 파일 만들기</button><button type="button" class="btn btn--line btn--sm" data-act="restore">백업 불러오기</button></div></div>
+      <div class="row" style="gap:8px"><button type="button" class="btn btn--line btn--sm" data-act="backup">${ic('share')}백업 파일 만들기</button><button type="button" class="btn btn--line btn--sm" data-act="restore">백업 불러오기</button></div>
+      <button type="button" class="linkbtn" style="align-self:flex-start" data-act="rescue">사라진 사진 되찾기</button></div>
     <div class="row"><button type="button" class="btn btn--line" id="logoutBtn">${ACC&&ACC.demo?'회원가입 하기':'로그아웃'}</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button class="btn btn--primary" type="submit">저장</button></div></form>`,sh=>{
       sh.querySelector('#logoutBtn').addEventListener('click',()=>{authMode=(ACC&&ACC.demo)?'signup':'login';logout()});
       sh.querySelector('#coachForm').addEventListener('submit',e=>{e.preventDefault();S.coach=sh.querySelector('#f-coach').value.trim()||'코치';S.club=sh.querySelector('#f-club').value.trim();markDirty();closeModal();renderAll()})});
@@ -1584,6 +1586,27 @@ async function exportBackup(){
   if(dls){try{await dls.save({filename:fname,data:blob});toast(`고객 ${S.clients.length}명 백업 파일을 저장했어요`)}catch(e){if(!e||e.code!=='declined')toast('여기서는 파일 저장이 막혀 있어요. 사파리에서 claude.ai에 로그인하고 열어주세요')}return}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();a.remove();
 }
+// 사라진 사진 되찾기: photos/records still in this phone's storage that no client points to any more
+// (e.g. after the client list was overwritten) come back as '되찾은 고객' — two photos each, oldest first —
+// and the saved share images come back as records of one '되찾은 저장 기록' client.
+async function rescueLost(){
+  toast('휴대폰에 남은 사진을 찾는 중이에요…');
+  const keys=await DB.keys(),usedImg=new Set(),usedSnap=new Set();
+  for(const k of keys){if(typeof k!=='string'||!(k==='state'||k.startsWith('state:')))continue;let st;try{st=JSON.parse(await DB.get(k))}catch(e){continue}
+    for(const c of (st&&st.clients)||[]){for(const r of [c.before,c.after])if(r&&r.photo)usedImg.add(r.photo);for(const h of c.history||[])usedSnap.add(h.id)}}
+  for(const c of S.clients){for(const r of [c.before,c.after])if(r&&r.photo)usedImg.add(r.photo);for(const h of c.history||[])usedSnap.add(h.id)}
+  const t36=id=>parseInt(String(id).slice(0,8),36)||0;
+  const imgs=keys.filter(k=>typeof k==='string'&&k.startsWith('img:')).map(k=>k.slice(4)).filter(id=>!usedImg.has(id)).sort((a,b)=>t36(a)-t36(b));
+  const snaps=keys.filter(k=>typeof k==='string'&&k.startsWith('thumb:')).map(k=>k.slice(6)).filter(id=>!usedSnap.has(id)).sort((a,b)=>t36(b)-t36(a));
+  if(!imgs.length&&!snaps.length){closeModal();toast('되찾을 사진이 없어요');return}
+  const now=Date.now();let n=0;
+  for(let i=0;i<imgs.length;i+=2){n++;const c={id:uid(),name:`되찾은 고객 ${n}`,age:'',sex:'f',height:'',phone:'',consent:0,memo:'사라진 사진 되찾기로 복구했어요. 이름과 정보를 다시 넣어주세요.',history:[],createdAt:now,updatedAt:now,before:blankRec(),after:blankRec()};
+    c.before.photo=imgs[i];if(imgs[i+1])c.after.photo=imgs[i+1];S.clients.push(c)}
+  if(snaps.length){const c={id:uid(),name:'되찾은 저장 기록',age:'',sex:'f',height:'',phone:'',consent:0,memo:'예전에 저장한 공유 이미지들이에요. 눌러서 보고 저장할 수 있어요.',history:[],createdAt:now,updatedAt:now,before:blankRec(),after:blankRec()};
+    for(const id of snaps){const t=await DB.get('thumb:'+id);if(!t)continue;thumbs[id]=t;c.history.push({id,savedAt:t36(id)||now,period:'',before:{},after:{}})}
+    if(c.history.length)S.clients.push(c)}
+  await persist();closeModal();renderAll();toast(`사진 ${imgs.length}장${snaps.length?`, 저장 기록 ${snaps.length}개`:''}를 되찾았어요. 고객 목록을 확인해 주세요`);
+}
 async function importBackup(file){
   let b;try{b=JSON.parse(await file.text())}catch(e){toast('백업 파일을 읽지 못했어요');return}
   if(!b||b.app!=='bodylog'||!Array.isArray(b.clients)){toast('바디로그 백업 파일이 아니에요');return}
@@ -1656,6 +1679,7 @@ document.addEventListener('click',async e=>{
     case 'cancel-delete':document.getElementById('delConfirm').hidden=true;break;
     case 'pin-change':pinChangeForm();break;
     case 'backup':exportBackup();break;
+    case 'rescue':rescueLost();break;
     case 'restore':$('#backupInput').value='';$('#backupInput').click();break;
     case 'acct-delete':deleteAccountForm();break;
     case 'confirm-delete':{const name=c.name;(c.history||[]).forEach(h=>DB.del('thumb:'+h.id));for(const k of ['before','after'])if(c[k].photo&&!c[k].photo.startsWith('sample:'))DB.del('img:'+c[k].photo);
