@@ -468,9 +468,9 @@ function makeSample(){
   const d=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
   const map=([x,y])=>[470+.9*(x-450),70+.9*y];
   const c={id:'sample',name:'예시 고객',height:'160',phone:'010-1234-5678',memo:'예시 데이터입니다. 자유롭게 수정하거나 삭제해도 됩니다.',createdAt:Date.now(),updatedAt:Date.now()-3*864e5,sample:true,consent:1,history:[],
-    before:{photo:'sample:before',date:d(87),weight:'72.4',fat:'34.2',muscle:'24.1',visceral:'9',water:'33.4',protein:'8.5',mineral:'2.4',tf:{s:1,x:0,y:0},mask:[],
+    before:{photo:'sample:before',date:d(87),weight:'72.4',fat:'34.2',fatKg:'24.8',muscle:'24.1',visceral:'9',water:'33.4',protein:'8.5',mineral:'2.4',tf:{s:1,x:0,y:0},mask:[],
       pose:{sh:[450,375],hip:[450,610],ank:[450,1105],face:{cx:450,cy:262,r:66}}},
-    after:{photo:'sample:after',date:d(3),weight:'68.8',fat:'29.8',muscle:'24.6',visceral:'7',water:'37.9',protein:'9.9',mineral:'3.1',tf:{s:1,x:0,y:0},mask:[],
+    after:{photo:'sample:after',date:d(3),weight:'68.8',fat:'29.8',fatKg:'20.5',muscle:'24.6',visceral:'7',water:'37.9',protein:'9.9',mineral:'3.1',tf:{s:1,x:0,y:0},mask:[],
       pose:{sh:map([450,375]),hip:map([450,610]),ank:map([450,1105]),face:{cx:470,cy:70+.9*262,r:66*.9}}}};
   photos['sample:before']=photos['sample:before']||samplePhoto(false);photos['sample:after']=photos['sample:after']||samplePhoto(true);
   autoMask(c.before);autoMask(c.after);autoAlign(c);
@@ -1158,9 +1158,10 @@ const bcMid=k=>Math.round((BC_STD[k][0]+BC_STD[k][1])/2*10)/10;
 const bcSt=(k,v)=>v<BC_STD[k][0]?'low':v>BC_STD[k][1]?(k==='fat'?'high':'plus'):(k!=='fat'&&v<bcMid(k)-1e-9)?'mid':'ok';
 const bcCol=(k,s)=>s==='low'?BC_LOW[k]:BC_COL[s];
 // % of body weight for one record, or null when something is missing
-function bcVals(r){const f=parseFloat(r.fat);if(isNaN(f))return null;const v={fat:f};
+const bcFatPct=r=>{const w=parseFloat(r.weight),g=parseFloat(r.fatKg);return w>0&&g>0?Math.round(g/w*1000)/10:NaN};
+function bcVals(r){const f=bcFatPct(r);if(isNaN(f))return null;const v={fat:f};
   for(const [k] of BCM){const n=parseFloat(r[k]);if(!(n>0))return null;v[k]=n}return v}
-function bcMissing(c){const miss=[];if(!(parseFloat(c.height)>100))miss.push('키');sides.forEach(([k,L])=>{const r=c[k],m=[];if(isNaN(parseFloat(r.fat)))m.push(parseFloat(r.weight)>0?'체지방':'체중, 체지방');BCM.forEach(([f,lab])=>{if(!(parseFloat(r[f])>0))m.push(lab)});if(m.length)miss.push(`${L}: ${m.join(', ')}`)});return miss}
+function bcMissing(c){const miss=[];if(!(parseFloat(c.height)>100))miss.push('키');sides.forEach(([k,L])=>{const r=c[k],m=[];if(isNaN(bcFatPct(r)))m.push(parseFloat(r.weight)>0?'체지방':'체중, 체지방');BCM.forEach(([f,lab])=>{if(!(parseFloat(r[f])>0))m.push(lab)});if(m.length)miss.push(`${L}: ${m.join(', ')}`)});return miss}
 function bcType(v){const s=k=>bcSt(k,v[k]);if(s('fat')==='high')return s('protein')==='low'?'근육 부족 비만형':'비만형';if(s('fat')==='low')return '마른형';if(s('protein')==='low')return '근육 부족형';return '표준형'}
 const bcFac=(k,v)=>{const [lo,hi]=BC_STD[k];if(v<lo)return Math.max(.62,1-(lo-v)/lo*2.2);if(v>hi)return Math.min(1.6,1+(v-hi)/hi*1.6);return 1};
 function bcParts(f){
@@ -1302,7 +1303,7 @@ function renderBC(d,ratio,scale=1){
   return cv;
 }
 // one item as % of body weight (fat = 체지방률), or null
-function bcOne(r,k){const n=parseFloat(r[k]);return k==='fat'?(isNaN(n)?null:n):(n>0?n:null)}
+function bcOne(r,k){if(k==='fat'){const n=bcFatPct(r);return isNaN(n)?null:n}const n=parseFloat(r[k]);return n>0?n:null}
 function bcCardHTML(c){
   bcUse(c.sex,c.height);
   const miss=bcMissing(c),ok=!miss.length;
@@ -1315,7 +1316,7 @@ function bcCardHTML(c){
     <div class="card__head"><div><span class="label">Body composition</span><h2>체성분 비교 그림</h2></div><p>인바디 결과를 사람 모양과 그래프로 보여줘요 · <b style="color:#fff">${sexLabel(c.sex)}${parseFloat(c.height)>100?' · 키 '+esc(c.height)+'cm':''} 기준</b> <button type="button" data-act="edit-client" style="color:#9BE22E;font-weight:600;text-decoration:underline">바꾸기</button></p></div>
     <div class="bc-grid">
       <div>
-        ${ok?'':`<div class="bc-empty"><b>키와 인바디 결과지 숫자</b>만 넣으면 그림이 바로 만들어져요.<br><small>${!c.height&&BCM.every(([f])=>!c.before[f]&&!c.after[f])&&!c.before.fat&&!c.after.fat?'키, 그리고 BEFORE·AFTER 각각 체중 · 체수분 · 단백질 · 무기질 · 체지방':'아직 빈 칸: '+miss.map(esc).join(' / ')}</small></div>`}
+        ${ok?'':`<div class="bc-empty"><b>키와 인바디 결과지 숫자</b>만 넣으면 그림이 바로 만들어져요.<br><small>${!c.height&&BCM.every(([f])=>!c.before[f]&&!c.after[f])&&!c.before.fatKg&&!c.after.fatKg?'키, 그리고 BEFORE·AFTER 각각 체중 · 체수분 · 단백질 · 무기질 · 체지방':'아직 빈 칸: '+miss.map(esc).join(' / ')}</small></div>`}
         <div class="bc-head"><span></span><span>BEFORE</span><span></span><span>AFTER</span><span>변화</span></div>
         <div class="bc-sum">${rows}</div>
         ${vb&&va?`<div class="bc-type"><span>BEFORE 체형<b style="color:${bcType(vb)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(vb)}</b></span><span>AFTER 체형<b style="color:${bcType(va)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(va)}</b></span></div>`:''}
@@ -1336,7 +1337,7 @@ function bcCardHTML(c){
 function bcForm(c){
   // same order as the InBody/ACCUNIQ sheet; 체지방 is entered in kg and 체지방률 % is worked out from 체중
   const F=[['weight','체중','kg'],['water','체수분','L'],['protein','단백질','kg'],['mineral','무기질','kg'],['fatKg','체지방','kg']];
-  const kgOf=r=>r.fatKg||(parseFloat(r.fat)>0&&parseFloat(r.weight)>0?String(Math.round(r.fat*r.weight/10)/10):'');
+  const kgOf=r=>r.fatKg||'';
   modal(`<h3>인바디 숫자 넣기</h3><p style="margin:-6px 0 0;color:var(--muted);font-size:13px">인바디 결과지 <b>체성분분석</b> 칸의 숫자를 그대로 넣어주세요. 체지방률(%)은 체지방(kg) ÷ 체중으로 자동 계산돼요.</p>
     <label class="form-field">키 <small style="font-weight:500">(인바디 표준 범위를 키로 계산해요)</small><span class="field" style="max-width:160px"><input id="bcHeight" inputmode="decimal" value="${esc(c.height||'')}" placeholder="예: 160"><small>cm</small></span></label>
     <div class="mwrap"><table class="mtable bcform"><colgroup><col class="c1"><col><col></colgroup><thead><tr><th></th><th>BEFORE</th><th style="text-align:left">AFTER</th></tr></thead><tbody>
@@ -1346,16 +1347,16 @@ function bcForm(c){
       sh.querySelectorAll('[data-bcf]').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/[^0-9.]/g,'')}));
       sh.querySelector('#bcSave').addEventListener('click',async()=>{const t=active();if(!t)return;
         sh.querySelectorAll('[data-bcf]').forEach(i=>{t[i.dataset.side][i.dataset.bcf]=i.value});
-        sides.forEach(([k])=>{const r=t[k],w=parseFloat(r.weight),g=parseFloat(r.fatKg);if(w>0&&g>0)r.fat=String(Math.round(g/w*1000)/10)});t.height=(sh.querySelector('#bcHeight').value.match(/\d+(\.\d+)?/)||[''])[0];
+        t.height=(sh.querySelector('#bcHeight').value.match(/\d+(\.\d+)?/)||[''])[0];
         touch(t);await persist();closeModal();renderMain();
         toast(bcMissing(t).length?'저장했어요. 빈 칸을 채우면 그림이 만들어져요':'체성분 그림이 준비됐어요');
         const sec=document.querySelector('.bc-card');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'})});
     });
 }
-function bcData(c,sn){const r=sn||c;return{name:c.name,age:c.age,sex:c.sex,height:c.height,before:r.before,after:r.after}}
+function bcData(c,sn){const r=sn||c,old=x=>sn&&x.fatKg===undefined&&parseFloat(x.fat)>0&&parseFloat(x.weight)>0?{...x,fatKg:String(Math.round(x.fat*x.weight/10)/10)}:x;return{name:c.name,age:c.age,sex:c.sex,height:c.height,before:old(r.before),after:old(r.after)}}
 function drawBCPreview(){const pv=$('#bcPreview'),c=active();if(!pv||!c)return;const ok=!bcMissing(c).length;pv.style.opacity=ok?1:.35;
   // not filled in yet: show a faded example so the coach sees what they will get
-  const ex={name:c.name,age:c.age,sex:c.sex,height:parseFloat(c.height)>100?c.height:(c.sex==='m'?'172':'160'),before:{date:c.before.date,weight:'72.4',fat:'34.2',water:'33.4',protein:'8.5',mineral:'2.4'},after:{date:c.after.date,weight:'68.8',fat:'27.5',water:'37.9',protein:'9.9',mineral:'3.1'}};
+  const ex={name:c.name,age:c.age,sex:c.sex,height:parseFloat(c.height)>100?c.height:(c.sex==='m'?'172':'160'),before:{date:c.before.date,weight:'72.4',fat:'34.2',fatKg:'24.8',water:'33.4',protein:'8.5',mineral:'2.4'},after:{date:c.after.date,weight:'68.8',fat:'27.5',fatKg:'18.9',water:'37.9',protein:'9.9',mineral:'3.1'}};
   const card=renderBC(ok?bcData(c):ex,S.bcRatio,.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0)}
 
 
@@ -1686,7 +1687,7 @@ document.addEventListener('click',async e=>{
       S.clients=S.clients.filter(x=>x.id!==c.id);S.activeId=S.clients[0]?.id||null;mode=null;closeModal();await persist();renderAll();toast(`${name} 고객을 삭제했습니다`);break}
     case 'save':{if(TRIAL){premiumSheet();toast('써보기 중에는 저장이 안 돼요');break}if(mode)mode=null;try{await document.fonts.ready}catch(e){}
       const thumb=renderCard(.36).toDataURL('image/jpeg',.82);
-      const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral,water:c.before.water||'',protein:c.before.protein||'',mineral:c.before.mineral||''},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral,water:c.after.water||'',protein:c.after.protein||'',mineral:c.after.mineral||''}};
+      const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral,water:c.before.water||'',protein:c.before.protein||'',mineral:c.before.mineral||'',fatKg:c.before.fatKg||''},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral,water:c.after.water||'',protein:c.after.protein||'',mineral:c.after.mineral||'',fatKg:c.after.fatKg||''}};
       thumbs[snap.id]=thumb;await DB.set('thumb:'+snap.id,thumb);delete snap.thumb;
       const drop=(c.history||[]).slice(29);drop.forEach(h=>{DB.del('thumb:'+h.id);delete thumbs[h.id]});
       c.history=[snap,...(c.history||[])].slice(0,30);touch(c);
@@ -1758,7 +1759,7 @@ document.addEventListener('input',e=>{
   if(t.id==='brush'){brush=t.value/100;$('#brushOut').textContent=Math.round(t.value);return}
   if(t.dataset.field&&c){
     if(t.dataset.field==='memo'){c.memo=t.value}
-    else{const k=t.dataset.side,f=t.dataset.field;c[k][f]=f==='date'?t.value:t.value.replace(/[^0-9.]/g,'');if(f==='fat'&&c[k].fatKg)c[k].fatKg='';
+    else{const k=t.dataset.side,f=t.dataset.field;c[k][f]=f==='date'?t.value:t.value.replace(/[^0-9.]/g,'');
       if(f!=='date'){const m=METRICS.find(x=>x[0]===f)||BCM.find(x=>x[0]===f);const cell=document.querySelector(`[data-delta="${f}"]`);if(cell)cell.innerHTML=deltaCell(c.before[f],c.after[f],m[4],m[3])}}
     touch(c);drawPreviewSoon();if(t.dataset.field!=='memo')bcStatusSoon();
   }
