@@ -1491,7 +1491,7 @@ function snapModal(c,sn){
 }
 const PRO_PRICE='9,900원';
 const PRO_TITLE='내 브랜드를 알리는 비포·애프터';
-const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>사진 속 글씨 자동 지우기</b><br><small>날짜·시간 앱 글씨를 버튼 한 번으로 깨끗하게 지워요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료·광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
+const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>사진 속 글씨 자동 지우기</b><br><small>날짜·시간 앱 글씨를 버튼 한 번으로 깨끗하게 지워요</small>','<b>워터마크가 내 상호로</b><br><small>사진 발밑 BODYLOG 로고 대신 우리 상호가 들어가요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
 const proPromo=()=>`<div class="pro-promo"><b>${PRO_TITLE} · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프로 보기</button></div>`;
 function premiumSheet(){
   const perks=PRO_PERKS;
