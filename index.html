@@ -1245,9 +1245,10 @@ function clientForm(c){
   const isNew=!c;c=c||{name:'',phone:'',memo:''};
   modal(`<h3>${isNew?'새 고객 등록':'고객 정보'}</h3>
     <form id="clientForm" style="display:flex;flex-direction:column;gap:12px">
-      <label class="form-field">이름<input id="f-name" maxlength="30" value="${c.sample?'':esc(c.name)}" placeholder="예: 김민지"></label>
+      <label class="form-field">이름<input id="f-name" maxlength="30" value="${c.sample&&c.name==='예시 고객'?'':esc(c.name)}" placeholder="예: 김민지"></label>
       <label class="form-field">나이 <small style="color:var(--muted);font-weight:500">(공유 이미지에 표시돼요, 비워도 돼요)</small><input id="f-age" inputmode="numeric" maxlength="3" value="${esc(c.age||'')}" placeholder="예: 52"></label>
       <div class="form-field">성별 <small style="color:var(--muted);font-weight:500">(체성분 기준치가 달라져요)</small><div class="lseg sexseg"><label><input type="radio" name="f-sex" value="f" ${c.sex!=='m'?'checked':''}><span>여성</span></label><label><input type="radio" name="f-sex" value="m" ${c.sex==='m'?'checked':''}><span>남성</span></label></div></div>
+      <label class="form-field">키 <small style="color:var(--muted);font-weight:500">(체성분 표준 범위를 키로 계산해요)</small><span class="field" style="max-width:160px"><input id="f-height" inputmode="decimal" maxlength="5" value="${esc(c.height||'')}" placeholder="예: 158"><small>cm</small></span></label>
       <label class="form-field">전화번호<input id="f-phone" inputmode="tel" maxlength="20" value="${esc(c.phone)}" placeholder="010-0000-0000"></label>
       <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;cursor:pointer"><input type="checkbox" id="f-consent" ${c.consent?'checked':''} style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent)"><span><b>사진 활용 동의 받음</b><br><small style="color:var(--muted)">얼굴을 가린 비포·애프터 사진을 SNS·홍보에 쓰는 것에 고객이 동의했어요</small></span></label>
       <p id="f-err" style="margin:0;color:var(--danger);font-size:13px" hidden>이름을 입력해주세요.</p>
@@ -1269,11 +1270,11 @@ function clientForm(c){
         if(!isNew){const err=sh.querySelector('#f-err');err.hidden=!hit;if(hit)err.textContent=`${hit.name} 고객이 이미 이 번호를 사용 중입니다.`}
       });
       sh.querySelector('#clientForm').addEventListener('submit',e=>{e.preventDefault();
-        const sex=sh.querySelector('input[name=f-sex]:checked')?.value==='m'?'m':'f',age=(sh.querySelector('#f-age').value.match(/\d+/)||[''])[0].slice(0,3),name=sh.querySelector('#f-name').value.trim(),phone=sh.querySelector('#f-phone').value.trim(),consent=sh.querySelector('#f-consent').checked;
+        const sex=sh.querySelector('input[name=f-sex]:checked')?.value==='m'?'m':'f',height=(sh.querySelector('#f-height').value.match(/\d+(\.\d+)?/)||[''])[0],age=(sh.querySelector('#f-age').value.match(/\d+/)||[''])[0].slice(0,3),name=sh.querySelector('#f-name').value.trim(),phone=sh.querySelector('#f-phone').value.trim(),consent=sh.querySelector('#f-consent').checked;
         if(!name){const er=sh.querySelector('#f-err');er.textContent='이름을 입력해주세요.';er.hidden=false;return}
         if(findByPhone(phone,isNew?null:active().id))return;
-        if(isNew){const n={id:uid(),name,age,sex,phone,consent:consent?Date.now():0,memo:'',history:[],createdAt:Date.now(),updatedAt:Date.now(),before:blankRec(),after:blankRec()};S.clients.push(n);S.activeId=n.id;mode=null;toast(`${name} 고객을 등록했습니다`)}
-        else{const t=active();t.name=name;t.age=age;t.sex=sex;t.phone=phone;t.consent=consent?(t.consent||Date.now()):0;touch(t);toast('고객 정보를 저장했습니다')}
+        if(isNew){const n={id:uid(),name,age,sex,height,phone,consent:consent?Date.now():0,memo:'',history:[],createdAt:Date.now(),updatedAt:Date.now(),before:blankRec(),after:blankRec()};S.clients.push(n);S.activeId=n.id;mode=null;toast(`${name} 고객을 등록했습니다`)}
+        else{const t=active();t.name=name;t.age=age;t.sex=sex;t.height=height;if(t.sample&&name!=='예시 고객')t.sample=false;t.phone=phone;t.consent=consent?(t.consent||Date.now()):0;touch(t);toast('고객 정보를 저장했습니다')}
         markDirty();closeModal();renderAll();
       });
     });
