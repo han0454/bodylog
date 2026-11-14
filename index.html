@@ -718,9 +718,39 @@ function getSeg(){
   })();
   getSeg.p.catch(()=>{getSeg.p=null});return getSeg.p;
 }
+// full-body pose model with its own body mask: keeps arms and legs the selfie model misses (skin next to a light wall, knee bands)
+function getSegPose(){
+  if(getSegPose.p)return getSegPose.p;
+  getSegPose.p=(async()=>{
+    const V=await import(`${MPCDN}/vision_bundle.mjs`);const rel=p=>new URL(p,location.href).href;
+    const tries=[
+      [{wasmLoaderPath:rel('mp/vision_wasm_internal.js'),wasmBinaryPath:rel('mp/vision_wasm_internal.wasm')},rel('mp/pose_model.wasm')],
+      [{wasmLoaderPath:`${MPCDN}/wasm/vision_wasm_internal.js`,wasmBinaryPath:`${MPCDN}/wasm/vision_wasm_internal.wasm`},'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task']];
+    for(const [w,m] of tries){try{return await V.PoseLandmarker.createFromOptions(w,{baseOptions:{modelAssetPath:m,delegate:'CPU'},runningMode:'IMAGE',numPoses:1,outputSegmentationMasks:true})}catch(e){console.warn('seg pose load',e)}}
+    throw new Error('seg pose unavailable');
+  })();
+  getSegPose.p.catch(()=>{getSegPose.p=null});return getSegPose.p;
+}
+// adds the pose model's body mask back, but only inside tubes along the arm and leg bones (so gaps between the legs stay background)
+function addLimbs(pm,src,v,w,h){
+  const pw=Math.max(4,Math.round(w/4)*4),ph=Math.max(4,Math.round(h/4)*4);/* width must be a multiple of 4 or the mask read crashes */
+  const t=mk(pw,ph);t.getContext('2d').drawImage(src,0,0,pw,ph);
+  pm.detect(t,r=>{const m=r.segmentationMasks&&r.segmentationMasks[0],L=r.landmarks&&r.landmarks[0];if(!m||!L)return;
+    const f=m.getAsFloat32Array(),mw=m.width,mh=m.height;
+    const g=mk(w,h),gx=g.getContext('2d'),P=i=>[L[i].x*w,L[i].y*h],d=(a,b)=>Math.hypot(P(a)[0]-P(b)[0],P(a)[1]-P(b)[1]);
+    const sh=d(11,12),hp=d(23,24),leg=Math.max(hp*.32,sh*.2),arm=Math.max(sh*.16,hp*.2);
+    gx.strokeStyle='#fff';gx.lineCap='round';gx.lineJoin='round';
+    const line=(ids,rad)=>{gx.lineWidth=rad*2;gx.beginPath();ids.forEach((i,k)=>{const p=P(i);k?gx.lineTo(p[0],p[1]):gx.moveTo(p[0],p[1])});gx.stroke()};
+    line([23,25,27,29,31,27],leg);line([24,26,28,30,32,28],leg);line([11,13,15,19],arm);line([12,14,16,20],arm);line([15,17],arm*.8);line([16,18],arm*.8);
+    const gd=gx.getImageData(0,0,w,h).data;
+    for(let y=0;y<h;y++){const fy=Math.min(mh-1,Math.floor(y*mh/h))*mw;for(let x=0;x<w;x++){const i=y*w+x,a=gd[i*4+3];if(!a)continue;
+      const p=f[fy+Math.min(mw-1,Math.floor(x*mw/w))]*a/255;if(p>v[i])v[i]=p}}
+    freeCanvas(g)});
+  freeCanvas(t);
+}
 async function loadPersonMask(id){
   if(!id||personMasks[id])return personMasks[id]||null;
-  const saved=await DB.get('seg3:'+id);
+  const saved=await DB.get('seg4:'+id);
   if(saved){try{const im=await loadImg(saved);const c=mk(im.naturalWidth,im.naturalHeight);c.getContext('2d').drawImage(im,0,0);personMasks[id]=c;return c}catch(e){}}
   const ph=await ensurePhoto(id);if(!ph)return null;
   const lm=await getSeg();
@@ -737,9 +767,12 @@ async function loadPersonMask(id){
   const S=Math.min(w,h);
   if(h>S*1.15){const n=Math.ceil((h-S)/(S*.5))+1;for(let i=0;i<n;i++)run(0,Math.round((h-S)*i/(n-1)),S,S,1)}
   else if(w>S*1.15){const n=Math.ceil((w-S)/(S*.5))+1;for(let i=0;i<n;i++)run(Math.round((w-S)*i/(n-1)),0,S,S,1)}
-  freeCanvas(src);if(!got)return null;
+  if(!got){freeCanvas(src);return null}
+  const vv=new Float32Array(w*h);for(let i=0;i<w*h;i++)vv[i]=wt[i]?acc[i]/wt[i]:0;
+  try{const pm=await getSegPose();addLimbs(pm,src,vv,w,h)}catch(e){console.warn('limbs',e)}
+  freeCanvas(src);
   const out=mk(w,h),ox=out.getContext('2d'),d=ox.createImageData(w,h);
-  for(let i=0;i<w*h;i++){const v=wt[i]?acc[i]/wt[i]:0,a=Math.min(1,Math.max(0,(v-.45)/.3));d.data[i*4+3]=a*255}
+  for(let i=0;i<w*h;i++){const v=vv[i],a=Math.min(1,Math.max(0,(v-.45)/.3));d.data[i*4+3]=a*255}
   // keep the person only: small loose pieces (date text, wall bits) are dropped
   {const lab=new Int32Array(w*h),sizes=[0],st=[];let n=0;
     for(let s0=0;s0<w*h;s0++){if(lab[s0]||d.data[s0*4+3]<128)continue;n++;let cnt=0;lab[s0]=n;st.push(s0);
@@ -750,7 +783,7 @@ async function loadPersonMask(id){
   // soften the outline a little
   const soft=mk(out.width,out.height),sx=soft.getContext('2d');sx.filter=`blur(${Math.max(1,out.width/500)}px)`;sx.drawImage(out,0,0);if(sx.filter==='none')sx.drawImage(out,0,0);
   freeCanvas(out);personMasks[id]=soft;
-  try{DB.set('seg3:'+id,soft.toDataURL('image/png'))}catch(e){}
+  try{DB.set('seg4:'+id,soft.toDataURL('image/png'));DB.del('seg3:'+id)}catch(e){}
   return soft;
 }
 function cutFor(rec){
@@ -1704,7 +1737,7 @@ document.addEventListener('click',async e=>{
       if(n){touch(c);await persist();renderToolsOnly();drawAll();toast(`글씨 ${n}곳을 찾아 지웠어요. 마음에 안 들면 되돌리기를 눌러주세요`)}else toast('자동으로 찾은 글씨가 없어요. 글씨 위를 손가락으로 문질러 주세요');break}
     case 'mode-bg':{if(mode&&mode.kind==='bg'){mode=null;renderMain();break}if(!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}
       mode={kind:'bg'};renderMain();Promise.all(['before','after'].map(k=>c[k].photo?loadPersonMask(c[k].photo).catch(()=>null):null)).then(()=>{if(mode&&mode.kind==='bg')drawBgThumbs()});break}
-    case 'photo-reset':{['before','after'].forEach(k=>{const r=c[k];r.bg=null;r.erase=[];if(r.photo){delete personMasks[r.photo];delete cutCache[r.photo];delete erases[r.photo];DB.del('seg3:'+r.photo)}});touch(c);await persist();renderMain();toast('원래 사진으로 돌아왔어요');break}
+    case 'photo-reset':{['before','after'].forEach(k=>{const r=c[k];r.bg=null;r.erase=[];if(r.photo){delete personMasks[r.photo];delete cutCache[r.photo];delete erases[r.photo];DB.del('seg3:'+r.photo);DB.del('seg4:'+r.photo)}});touch(c);await persist();renderMain();toast('원래 사진으로 돌아왔어요');break}
     case 'bg-set':{const v=b.dataset.v;
       if(v!=='none'){toast('사람을 찾고 있어요…');const ms=await Promise.all(['before','after'].map(k=>c[k].photo?loadPersonMask(c[k].photo).catch(()=>null):'skip'));
         if(ms.some(m=>!m)){toast('사진에서 사람을 찾지 못했어요. 전신이 보이는 사진인지 확인하거나 인터넷 연결을 확인해주세요');break}}
