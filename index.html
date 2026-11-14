@@ -1230,7 +1230,7 @@ function renderBC(d,ratio,scale=1){
   const panel=(label,date,v,px,pw)=>{const cx=px+pw/2,isB=label==='BEFORE';
     x.fillStyle='rgba(255,255,255,.07)';rr(x,px,pTop,pw,pH,22);x.fill();
     x.font=`700 ${Math.round(28*k)}px Sora, sans-serif`;x.textAlign='center';
-    x.fillStyle=isB?'#4D6A99':'#9BE22E';rr(x,cx-80*k,oy-74*k,160*k,44*k,12);x.fill();x.fillStyle=isB?'#fff':'#14250A';x.fillText(label,cx,oy-74*k+32*k);
+    x.fillStyle=isB?'#4D6A99':'#0B1220';rr(x,cx-80*k,oy-74*k,160*k,44*k,12);x.fill();if(!isB){x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=2;x.stroke()}x.fillStyle='#fff';x.fillText(label,cx,oy-74*k+32*k);
     x.font=`600 ${Math.round(20*k)}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('기준치',px+70*k,oy-4);x.fillText('측정치',px+pw-70*k,oy-4);x.fillText(date?fmtDate(date):'',cx,oy+20+bodyH+30);
     const MID=bcBody(x,cx,oy+20,v,sc);
     for(const kk of BC_KEYS){const y=oy+20+LY[kk]*sc,val=v[kk],s=bcSt(kk,val),ys=oy+20+MID.std[kk]*sc,ym=oy+20+MID.meas[kk]*sc;
