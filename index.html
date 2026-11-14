@@ -229,6 +229,10 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .form-field input{height:46px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:0 14px;font-size:15px;color:var(--ink);font-weight:500;outline:0}
 .form-field input:focus{border-color:var(--accent);background:var(--surface)}
 @media (max-width:600px){.overlay{align-items:flex-end;padding:0}.sheet{border-radius:22px 22px 0 0;max-width:none;padding-bottom:max(22px,env(safe-area-inset-bottom,0px))}}
+.export-img.is-trial{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none}
+.trial-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:45;display:flex;align-items:center;gap:8px;background:#111416;color:#fff;border-radius:999px;padding:7px 8px 7px 16px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.28);max-width:calc(100% - 32px);white-space:nowrap}
+.trial-bar b{color:#35C8AF}.trial-bar button{border:0;border-radius:999px;padding:7px 12px;font:inherit;font-weight:700;cursor:pointer}
+.trial-bar .tb-go{background:#35C8AF;color:#06201C}.trial-bar .tb-end{background:rgba(255,255,255,.14);color:#fff}
 .export-img{width:100%;border-radius:14px;display:block;max-height:60vh;object-fit:contain;background:#111416;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 .save-tip.is-flash{animation:tipflash 1.2s ease 2;outline:2px solid var(--accent)}@keyframes tipflash{50%{background:#fff3b0}}
 .save-tip--main{font-size:15px;padding:12px 14px;text-align:center}
@@ -962,7 +966,7 @@ function renderMain(){
           <div class="opt-list">
             <button type="button" class="opt" data-act="face"><span>얼굴 가림<small>지운 부분을 반투명하게 덮습니다</small></span><span class="switch ${S.face?'is-on':''}"></span></button>
             <button type="button" class="opt" data-act="opt-name"><span>이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가려서 표시'}</small></span><span class="switch ${S.showName?'is-on':''}"></span></button>
-            <button type="button" class="opt" data-act="premium"><span>워터마크 · ${isPro()?(S.wmOff?'없음':esc(wmLabel())):'BODYLOG 로고'}<small>${isPro()?'프리미엄 사용 중 · 눌러서 바꾸기':'<b style="color:var(--ink)">우리가게 이름 알리기</b>와 원하는 문구를 사용할 수 있어요'}</small></span><span class="pro-tag">${isPro()?'PRO':'PRO 🔒'}</span></button>
+            <button type="button" class="opt" data-act="premium"><span>워터마크 · ${isPro()?(S.wmOff?'없음':esc(wmLabel())):'BODYLOG 로고'}<small>${isPro()?(TRIAL?'프로 써보는 중 · 눌러서 바꾸기':'프로 사용 중 · 눌러서 바꾸기'):'<b style="color:var(--ink)">우리가게 이름 알리기</b>와 원하는 문구를 사용할 수 있어요'}</small></span><span class="pro-tag">${isPro()?'PRO':'PRO 🔒'}</span></button>
             <button type="button" class="opt" data-act="opt-nums"><span>수치 표시<small>체중·체지방·근육 변화</small></span><span class="switch ${S.showNums?'is-on':''}"></span></button>
           </div>
           <button type="button" class="btn btn--primary" style="width:100%" data-act="export">${ic('share')}공유 이미지 만들기</button>
@@ -1036,14 +1040,24 @@ let pvTimer;function drawPreviewSoon(){clearTimeout(pvTimer);pvTimer=setTimeout(
 /* ---------- share image ---------- */
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
 // BODYLOG logo watermark, bottom-right inside each photo (right edge rx, bottom edge by)
-const isPro=()=>S.plan==='premium';
+let TRIAL=false; // 프로 써보기: Pro look on screen, but nothing can be saved (not stored, ends on reload)
+const isPaid=()=>S.plan==='premium';
+const isPro=()=>isPaid()||TRIAL;
+// big diagonal 'PRO 써보기' marks over the whole image, so a screenshot of the trial can't be used
+function trialMark(x,W,H){if(!TRIAL)return;x.save();x.translate(W/2,H/2);x.rotate(-Math.PI/6);x.textAlign='center';x.textBaseline='middle';
+  x.font='800 64px Sora, "IBM Plex Sans KR", sans-serif';x.fillStyle='rgba(255,255,255,.22)';x.strokeStyle='rgba(0,0,0,.18)';x.lineWidth=2;
+  for(let r=-6;r<=6;r++)for(let q=-2;q<=2;q++){const tx=q*520+(r%2?260:0),ty=r*190;x.strokeText('PRO 써보기',tx,ty);x.fillText('PRO 써보기',tx,ty)}
+  x.fillStyle='rgba(17,20,22,.72)';x.fillRect(-W,-58,W*2,116);x.fillStyle='#35C8AF';x.font='800 50px "IBM Plex Sans KR", sans-serif';x.fillText('PRO 써보기 · 저장은 프로에서',0,2);x.restore()}
+const stripTrialErase=()=>S.clients.forEach(c=>['before','after'].forEach(k=>{const r=c[k];if(r&&r.erase&&r.erase.some(st=>st[0]&&st[0][3]===1)){r.erase=r.erase.filter(st=>!(st[0]&&st[0][3]===1));if(r.photo)delete erases[r.photo]}}));
+function trialBar(){let b=document.getElementById('trialBar');if(!TRIAL){if(b)b.remove();return}
+  if(!b){b=document.createElement('div');b.id='trialBar';b.className='trial-bar';b.innerHTML='<span><b>PRO</b> 써보는 중 · 저장은 안 돼요</span><button type="button" class="tb-go" data-act="premium">프로 시작</button><button type="button" class="tb-end" data-act="trial-off">그만</button>';document.body.appendChild(b)}}
 // share-card headline by the client's age group (no age → the original line)
 const HEADLINES={20:['지금 만든 몸이','평생의 기준이 된다'],30:['바쁜 하루 속에서도','나를 먼저 챙겼다'],40:['포기 대신','다시 시작을 택했다'],50:['나이는 숫자일 뿐,','변화는 진짜다'],60:['늦지 않았다,','몸이 증명한다'],70:['멈추지 않으면','몸은 답한다'],0:['나를 위한 시간,','만들어내는 변화']};
 const headlineFor=age=>{const a=parseInt(age,10);if(!(a>=15))return HEADLINES[0];return HEADLINES[Math.min(70,Math.max(20,Math.floor(a/10)*10))]};
 const brandName=()=>isPro()?(S.wmText||S.club||'핏코치'):'핏코치';
 const wmLabel=()=>isPro()?(S.wmOff?'':(S.wmText||S.club||'핏코치')):'BODYLOG';
 function watermark(x,rx,by,k=1){
-  if(isPro()){const t=wmLabel();if(!t)return; // premium: the coach's own name instead of the BODYLOG logo
+  if(isPro()){const t=wmLabel();if(!t)return; // pro: the coach's own name instead of the BODYLOG logo
     x.save();x.font=`700 ${Math.round(22*k)}px "IBM Plex Sans KR", sans-serif`;const pad=Math.round(14*k),w=x.measureText(t).width+pad*2,h=Math.round(40*k);
     x.globalAlpha=.78;x.fillStyle='rgba(12,14,16,.55)';rr(x,rx-w,by-h,w,h,h/2);x.fill();x.fillStyle='#fff';x.textBaseline='middle';x.fillText(t,rx-w+pad,by-h/2+1);x.restore();return}
   x.save();x.font=`700 ${Math.round(22*k)}px Sora, sans-serif`;
@@ -1069,7 +1083,8 @@ function renderCard(scale=1){
   const days=(c.before.date&&c.after.date)?Math.round((new Date(c.after.date)-new Date(c.before.date))/864e5):0;
   x.font='600 28px "IBM Plex Sans KR", sans-serif';
   const club=brandName();
-  if(club){let t=club;while(t.length>1&&x.measureText(t).width>W-M*2-260)t=t.slice(0,-1);if(t!==club)t+='…';x.fillStyle=ink;x.fillText(t,W-M-x.measureText(t).width,y-6)}
+  if(isPro())x.font='700 42px "IBM Plex Sans KR", sans-serif'; // 프로: 상호를 크게
+  if(club){let t=club;while(t.length>1&&x.measureText(t).width>W-M*2-260)t=t.slice(0,-1);if(t!==club)t+='…';x.fillStyle=ink;x.fillText(t,W-M-x.measureText(t).width,y-(isPro()?2:6))}
   y+=tall?104:78;
   let [h1,h2]=headlineFor(c.age);if(days>0)h1=`${days}일, ${h1}`;let hs=tall?66:52;const top=y;x.font=`700 ${hs}px "IBM Plex Sans KR", sans-serif`;
   const hmax=W-M*2-(days>0?330:0);while(hs>36&&Math.max(x.measureText(h1).width,x.measureText(h2).width)>hmax){hs-=2;x.font=`700 ${hs}px "IBM Plex Sans KR", sans-serif`}
@@ -1113,6 +1128,7 @@ function renderCard(scale=1){
     }
   }
   x.fillStyle='#4D575E';x.font='500 22px "IBM Plex Sans KR", sans-serif';x.fillText('개인차가 있을 수 있습니다 · BODYLOG로 기록',M,H-(tall?96:56));
+  trialMark(x,W,H);
   return cv;
 }
 function drawPreview(){const pv=$('#preview');if(!pv||!active()){drawBCPreview();return}const card=renderCard(.3);pv.width=card.width;pv.height=card.height;pv.getContext('2d').drawImage(card,0,0);drawBCPreview()}
@@ -1216,7 +1232,7 @@ function renderBC(d,ratio,scale=1){
   // header
   const days=(d.before.date&&d.after.date)?Math.round((new Date(d.after.date)-new Date(d.before.date))/864e5):0;
   x.fillStyle='#fff';x.font=`700 30px Sora, sans-serif`;x.fillText('BODYLOG',50,76);
-  const club=brandName();if(club){x.fillStyle='#BFD3F2';x.font=`600 28px ${F}`;x.textAlign='right';let t=club;while(t.length>1&&x.measureText(t).width>560)t=t.slice(0,-1);if(t!==club)t+='…';x.fillText(t,W-50,76);x.textAlign='left'}
+  const club=brandName();if(club){x.fillStyle=isPro()?'#fff':'#BFD3F2';x.font=isPro()?`700 40px ${F}`:`600 28px ${F}`;x.textAlign='right';let t=club;while(t.length>1&&x.measureText(t).width>560)t=t.slice(0,-1);if(t!==club)t+='…';x.fillText(t,W-50,76);x.textAlign='left'}
   const hs=tall?56:48,h1y=tall?160:146,h2y=h1y+Math.round(hs*1.21);
   x.fillStyle='#fff';x.font=`700 ${hs}px ${F}`;x.fillText(days>0?`${days}일 만에,`:'체성분 변화,',50,h1y);x.fillStyle='#FFE89A';x.fillText('몸속이 달라졌어요',50,h2y);
   if(days>0){x.textAlign='right';x.fillStyle='#BFD3F2';x.font=`600 24px ${F}`;x.fillText('진행 기간',W-50,h1y-10);
@@ -1278,6 +1294,7 @@ function renderBC(d,ratio,scale=1){
     x.font=`700 ${tall?22:19}px Sora, sans-serif`;x.fillStyle=dd===0?'#BFD3F2':good?'#9BE22E':'#FF7A7A';x.fillText(dd===0?'변화 없음':`${dd>0?'▲ +':'▼ '}${dd.toFixed(1)}${bcDU(kk)}`,c0,base+(tall?90:84))});
   x.textAlign='center';x.fillStyle='#7F97BF';x.font=`500 ${tall?19:17}px ${F}`;x.fillText(`왼쪽 반 = 기준 모양 · 오른쪽 반 = 측정 모양 · 키 ${d.height}cm 인바디 표준 기준 · 개인차가 있을 수 있습니다`,W/2,H-(tall?26:18));x.textAlign='left';
   watermark(x,W-56,gy+56+(tall?0:-6),tall?.9:.8);
+  trialMark(x,W,H);
   return cv;
 }
 // one item as % of body weight (fat = 체지방률), or null
@@ -1437,25 +1454,25 @@ function snapModal(c,sn){
 const PRO_PRICE='9,900원';
 const PRO_TITLE='내 브랜드를 알리는 비포·애프터';
 const PRO_PERKS=['<b>내 브랜드로 홍보</b><br><small>업체·클럽·매장 이름을 사진에 넣어 홍보 효과를 극대화해요</small>','<b>공유될수록 내 이름이 퍼져요</b><br><small>고객이 사진을 자랑할 때마다 코치님이 알려져요</small>','<b>사진 속 글씨 자동 지우기</b><br><small>날짜·시간 앱 글씨를 버튼 한 번으로 깨끗하게 지워요</small>','<b>워터마크 없는 깔끔한 사진</b><br><small>상담 자료·광고에 바로 쓰기 좋아요</small>','<b>고화질 저장</b><br><small>인스타·블로그에 올려도 선명해요</small>'];
-const proPromo=()=>`<div class="pro-promo"><b>${PRO_TITLE} · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프리미엄 보기</button></div>`;
+const proPromo=()=>`<div class="pro-promo"><b>${PRO_TITLE} · 월 ${PRO_PRICE}</b><ol>${PRO_PERKS.map(t=>`<li>${t}</li>`).join('')}</ol><button type="button" class="btn btn--line btn--sm" data-act="premium">프로 보기</button></div>`;
 function premiumSheet(){
   const perks=PRO_PERKS;
   if(!isPro()){modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO</span><h3 class="pro-title">${PRO_TITLE}</h3>
     <div class="pro-price">${PRO_PRICE}<small> / 월</small></div>
     <ol class="pro-list">${perks.map((t,i)=>`<li><span class="pro-n">${i+1}</span><span>${t}</span></li>`).join('')}</ol>
-    <p style="margin:0;color:var(--muted);font-size:12.5px">결제는 정식 출시 때 열려요. 지금은 테스트로 프리미엄 기능을 미리 써볼 수 있어요.</p>
-    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" data-act="pro-on">프리미엄 미리 써보기</button></div>`);return}
-  modal(`<span class="pro-tag" style="align-self:flex-start">BODYLOG PRO 사용 중</span><h3>우리 상호 알리기</h3>
+    <p style="margin:0;color:var(--muted);font-size:12.5px;line-height:1.5"><b style="color:var(--ink)">써보기</b>는 무료예요. 화면에서 프로 기능을 다 써볼 수 있지만, 사진에 'PRO 써보기' 글씨가 덮이고 저장은 안 돼요.<br>결제는 정식 출시 때 열려요. 지금은 '프로 시작'을 누르면 테스트로 바로 켜져요.</p>
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="trial-on">써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button></div>`);return}
+  modal(`<span class="pro-tag" style="align-self:flex-start">${TRIAL?'BODYLOG PRO 써보는 중':'BODYLOG PRO 사용 중'}</span><h3>우리 상호 알리기</h3>${TRIAL?'<p style="margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)">써보기에서는 사진 저장이 안 돼요. 마음에 들면 <b style="color:var(--ink)">프로 시작</b>을 눌러주세요.</p>':''}
     <form id="wmForm" style="display:flex;flex-direction:column;gap:12px">
     <label class="form-field">상호 이름 <small style="color:var(--muted);font-weight:500">(공유 이미지 맨 위·워터마크에 표시)</small><input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'예: 피다다이어트')}"></label>
     <label class="form-field">코치 이름 <small style="color:var(--muted);font-weight:500">(고객 이름 옆 '담당 OOO'에 표시)</small><input id="f-wmcoach" maxlength="20" value="${esc(S.coach||'')}" placeholder="예: 한효정코치"></label>
     <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="f-wmoff" ${S.wmOff?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">워터마크 없애기</label>
-    <div class="row"><button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">저장</button></div></form>`,sh=>{
+    <div class="row">${TRIAL?'<button type="button" class="btn btn--line" data-act="trial-off">그만 써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button>':'<button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button>'}<span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">저장</button></div></form>`,sh=>{
     sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderAll();toast('저장했습니다')})});
 }
 function coachForm(){
   modal(`<h3>코치 정보</h3><form id="coachForm" style="display:flex;flex-direction:column;gap:12px"><label class="form-field">코치 이름 (공유 이미지에 표시)<input id="f-coach" maxlength="20" value="${esc(S.coach)}"></label>
-    <label class="form-field">클럽 이름 (프리미엄이면 공유 이미지에 표시, 무료는 핏코치)<input id="f-club" maxlength="24" value="${esc(S.club||'')}" placeholder="핏코치"></label>
+    <label class="form-field">클럽 이름 (프로면 공유 이미지에 표시, 무료는 핏코치)<input id="f-club" maxlength="24" value="${esc(S.club||'')}" placeholder="핏코치"></label>
     <p style="margin:0;color:var(--muted);font-size:13px">${ACC&&ACC.demo?'둘러보기 모드 (가입 전)':'로그인: '+esc(ACC?ACC.email:'')}</p>
     ${ACC&&!ACC.demo?'<div class="row" style="gap:14px"><button type="button" class="linkbtn" data-act="pin-change">비밀번호 바꾸기</button><button type="button" class="linkbtn" style="color:var(--danger)" data-act="acct-delete">회원 탈퇴</button></div>':''}
     <div style="background:var(--accent-soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">기록 백업</b><small style="color:var(--muted);line-height:1.5">고객 사진·수치·저장 기록을 파일 하나로 보관해요. 휴대폰을 바꾸거나 앱을 지워도 이 파일로 되살릴 수 있어요.</small>
@@ -1502,13 +1519,13 @@ async function exportCard(){
   const warns=[];
   if(!S.face)warns.push('얼굴 가림이 꺼져 있어 얼굴이 그대로 보입니다.');
   else sides.forEach(([k,L])=>{if(c[k].photo&&!c[k].mask.length)warns.push(`${L} 사진에 얼굴 가림이 없습니다.`)});
-  S.exportCount=(S.exportCount||0)+1;markDirty();const showPromo=!isPro()&&S.exportCount%3===1;
+  if(!TRIAL){S.exportCount=(S.exportCount||0)+1;markDirty()}const showPromo=!isPro()&&S.exportCount%3===1;
   if(!c.consent)warns.push('고객의 사진 공유 동의가 기록되지 않았습니다. 고객 정보에서 동의 여부를 체크해주세요.');
   const isMob=/iPhone|iPad|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
-  modal(`<h3>공유 이미지</h3>${warns.length?`<div style="background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5"><b>공유 전에 확인하세요</b><br>${warns.map(esc).join('<br>')}</div>`:''}${isMob?`<p class="save-tip save-tip--main">👇 아래 사진을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img" src="${url}" alt="비포 애프터 공유 이미지">
+  modal(`<h3>공유 이미지</h3>${warns.length?`<div style="background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5"><b>공유 전에 확인하세요</b><br>${warns.map(esc).join('<br>')}</div>`:''}${TRIAL?`<p class="save-tip save-tip--main"><b>PRO 써보기</b> 화면이에요. 깨끗한 사진 저장은 프로에서 돼요.</p>`:isMob?`<p class="save-tip save-tip--main">👇 아래 사진을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img${TRIAL?' is-trial':''}" src="${url}" alt="비포 애프터 공유 이미지">
     ${showPromo?proPromo():''}
-    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${ic('share')}갤러리에 저장</button></div>`,sh=>{
-      sh.querySelector('#dl').addEventListener('click',async()=>{
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${TRIAL?'프로 시작하고 저장':ic('share')+'갤러리에 저장'}</button></div>`,sh=>{
+      sh.querySelector('#dl').addEventListener('click',async()=>{if(TRIAL){premiumSheet();return}
         const file=new File([blob],fname,{type:'image/jpeg'});
         // 1) iPhone/Android share sheet → '이미지 저장' puts it straight into Photos (works on the app's own website)
         try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
@@ -1534,9 +1551,9 @@ async function exportBC(c,sn){
   const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.94));const url=cv.toDataURL('image/jpeg',.94);
   const fname=`bodylog_체성분_${(S.showName?c.name:maskName(c.name)).replace(/\*/g,'')}_${ratio==='916'?'9x16':'3x4'}.jpg`;
   const isMob=/iPhone|iPad|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
-  modal(`<h3>체성분 비교 그림</h3>${isMob?`<p class="save-tip save-tip--main">👇 아래 그림을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img" src="${url}" alt="체성분 비교 그림">
-    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${ic('share')}갤러리에 저장</button></div>`,sh=>{
-      sh.querySelector('#dl').addEventListener('click',async()=>{
+  modal(`<h3>체성분 비교 그림</h3>${TRIAL?`<p class="save-tip save-tip--main"><b>PRO 써보기</b> 화면이에요. 깨끗한 그림 저장은 프로에서 돼요.</p>`:isMob?`<p class="save-tip save-tip--main">👇 아래 그림을 <b>길게 누르고 '사진 앱에 저장'</b>을 누르면 갤러리에 저장돼요</p>`:''}<img class="export-img${TRIAL?' is-trial':''}" src="${url}" alt="체성분 비교 그림">
+    <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><button type="button" class="btn btn--primary" id="dl">${TRIAL?'프로 시작하고 저장':ic('share')+'갤러리에 저장'}</button></div>`,sh=>{
+      sh.querySelector('#dl').addEventListener('click',async()=>{if(TRIAL){premiumSheet();return}
         const file=new File([blob],fname,{type:'image/jpeg'});
         try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
         const dls=await getDownloads();
@@ -1640,7 +1657,7 @@ document.addEventListener('click',async e=>{
     case 'acct-delete':deleteAccountForm();break;
     case 'confirm-delete':{const name=c.name;(c.history||[]).forEach(h=>DB.del('thumb:'+h.id));for(const k of ['before','after'])if(c[k].photo&&!c[k].photo.startsWith('sample:'))DB.del('img:'+c[k].photo);
       S.clients=S.clients.filter(x=>x.id!==c.id);S.activeId=S.clients[0]?.id||null;mode=null;closeModal();await persist();renderAll();toast(`${name} 고객을 삭제했습니다`);break}
-    case 'save':{if(mode)mode=null;try{await document.fonts.ready}catch(e){}
+    case 'save':{if(TRIAL){premiumSheet();toast('써보기 중에는 저장이 안 돼요');break}if(mode)mode=null;try{await document.fonts.ready}catch(e){}
       const thumb=renderCard(.36).toDataURL('image/jpeg',.82);
       const snap={id:uid(),savedAt:Date.now(),period:periodText(c),before:{date:c.before.date,weight:c.before.weight,fat:c.before.fat,muscle:c.before.muscle,visceral:c.before.visceral,water:c.before.water||'',protein:c.before.protein||'',mineral:c.before.mineral||''},after:{date:c.after.date,weight:c.after.weight,fat:c.after.fat,muscle:c.after.muscle,visceral:c.after.visceral,water:c.after.water||'',protein:c.after.protein||'',mineral:c.after.mineral||''}};
       thumbs[snap.id]=thumb;await DB.set('thumb:'+snap.id,thumb);delete snap.thumb;
@@ -1655,7 +1672,7 @@ document.addEventListener('click',async e=>{
     case 'mode-adjust':case 'mode-mask':case 'mode-text':{const kind=act==='mode-adjust'?'adjust':act==='mode-text'?'text':'mask';
       if(mode&&mode.kind===kind){mode=null}else{const side=mode?mode.side:(c.before.photo?'before':'after');if(!c[side].photo&&!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}mode={kind,side:c[side].photo?side:(side==='before'?'after':'before')};if(kind==='mask'&&!S.face){S.face=true;markDirty()}}
       renderMain();break}
-    case 'auto-text':{if(!isPro()){premiumSheet();toast('글씨 자동 지우기는 프리미엄 기능이에요');break}let n=0;for(const k of ['before','after']){const r=c[k];if(!r.photo)continue;const st=findTextStrokes(r);if(!st.length)continue;(r.erase||(r.erase=[])).push(...st);n+=st.length}
+    case 'auto-text':{if(!isPro()){premiumSheet();toast('글씨 자동 지우기는 프로 기능이에요');break}let n=0;for(const k of ['before','after']){const r=c[k];if(!r.photo)continue;const st=findTextStrokes(r);if(!st.length)continue;if(TRIAL)st.forEach(a=>{if(a[0])a[0][3]=1});(r.erase||(r.erase=[])).push(...st);n+=st.length}
       if(n){touch(c);await persist();renderToolsOnly();drawAll();toast(`글씨 ${n}곳을 찾아 지웠어요. 마음에 안 들면 되돌리기를 눌러주세요`)}else toast('자동으로 찾은 글씨가 없어요. 글씨 위를 손가락으로 문질러 주세요');break}
     case 'mode-bg':{if(mode&&mode.kind==='bg'){mode=null;renderMain();break}if(!c.before.photo&&!c.after.photo){toast('먼저 사진을 추가해주세요');return}
       mode={kind:'bg'};renderMain();Promise.all(['before','after'].map(k=>c[k].photo?loadPersonMask(c[k].photo).catch(()=>null):null)).then(()=>{if(mode&&mode.kind==='bg')drawBgThumbs()});break}
@@ -1680,7 +1697,9 @@ document.addEventListener('click',async e=>{
     case 'bc-input':bcForm(c);break;
     case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
-    case 'pro-on':S.plan='premium';markDirty();premiumSheet();renderMain();toast('프리미엄을 미리 써보는 중이에요');break;
+    case 'pro-on':S.plan='premium';TRIAL=false;trialBar();markDirty();premiumSheet();renderMain();toast('프로를 시작했어요 (테스트)');break;
+    case 'trial-on':TRIAL=true;trialBar();closeModal();renderMain();toast('프로를 써보는 중이에요. 저장은 안 돼요');break;
+    case 'trial-off':TRIAL=false;stripTrialErase();trialBar();markDirty();closeModal();renderMain();toast('써보기를 끝냈어요');break;
     case 'pro-off':S.plan='free';markDirty();closeModal();renderMain();toast('무료 버전으로 돌아왔어요');break;
     case 'inbody':modal(`<h3>인바디 결과지로 자동 입력</h3><p style="margin:0;color:var(--muted);font-size:14px">갤러리의 인바디 결과지 사진을 고르면 체중·체지방률·골격근량·측정일을 읽어서 채워드려요. 어느 쪽 기록에 넣을까요?</p>
       <div class="lseg"><button type="button" data-act="inbody-pick" data-side="before">BEFORE<small>처음 기록</small></button><button type="button" data-act="inbody-pick" data-side="after">AFTER<small>최근 기록</small></button></div>
@@ -1743,6 +1762,7 @@ async function openAccount(acc,{coachName}={}){
   ACC=acc;S={coach:'코치',club:'핏코치',plan:'free',wmText:'',wmOff:false,activeId:null,face:true,ratio:'916',showName:false,showNums:true,clients:[]};mode=null;query='';
   let saved=null;try{const raw=await DB.get('state:'+acc.id);if(raw)saved=JSON.parse(raw)}catch(e){}
   if(saved&&Array.isArray(saved.clients))S={...S,...saved};
+  TRIAL=false;trialBar();if(!isPaid())stripTrialErase();
   else{const sm=makeSample();S.clients=[sm];S.activeId=sm.id;S.coach=coachName||'코치';await persist()}
   if(S.activeId&&!active())S.activeId=null;
   S.clients.forEach(c=>{if(c.sample&&c.name&&c.name!=='예시 고객')c.sample=false});
