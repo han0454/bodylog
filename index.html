@@ -1097,7 +1097,10 @@ function renderCard(scale=1){
     x.fillStyle=mut;x.font=`600 ${tall?28:24}px "IBM Plex Sans KR", sans-serif`;x.fillText('진행 기간',bx,by-big-(tall?8:6));
     x.textAlign='left';}
   y+=tall?52:44;x.fillStyle=mut;x.font='500 28px "IBM Plex Sans KR", sans-serif';
-  x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 ${isPro()?(S.coach||'핏코치'):'핏코치'}`,M,y);
+  if(isPro()){ // 프로: '담당 OOO' 조금 크게, 진하게
+    const pre=`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}`;x.font='500 30px "IBM Plex Sans KR", sans-serif';x.fillText(pre,M,y);const pw0=x.measureText(pre).width;
+    x.fillStyle=ink;x.font='700 34px "IBM Plex Sans KR", sans-serif';x.fillText(`담당 ${S.coach||'핏코치'}`,M+pw0,y);
+  }else x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 핏코치`,M,y);
   y+=tall?56:40;
   if(tall){ // 9:16: photos grow to fill the card instead of leaving an empty bottom
     const hasNums=S.showNums&&METRICS.some(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
