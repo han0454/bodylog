@@ -1505,8 +1505,9 @@ function premiumSheet(){
     <label class="form-field">상호 이름 <small style="color:var(--muted);font-weight:500">(공유 이미지 맨 위·워터마크에 표시)</small><input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'예: 피다다이어트')}"></label>
     <label class="form-field">코치 이름 <small style="color:var(--muted);font-weight:500">(고객 이름 옆 '담당 OOO'에 표시)</small><input id="f-wmcoach" maxlength="20" value="${esc(S.coach||'')}" placeholder="예: 한효정코치"></label>
     <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="f-wmoff" ${S.wmOff?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">워터마크 없애기</label>
-    <div class="row">${TRIAL?'<button type="button" class="btn btn--line" data-act="trial-off">그만 써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button>':'<button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button>'}<span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">저장</button></div></form>`,sh=>{
-    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderAll();toast('저장했습니다')})});
+    <div class="row">${TRIAL?'<button type="button" class="btn btn--line" data-act="trial-off">그만 써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button>':'<button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button>'}<span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">${TRIAL?'넣고 보기':'저장'}</button></div></form>`,sh=>{
+    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderAll();
+      if(TRIAL){if(active())exportCard();else toast('고객을 열면 상호와 코치 이름이 들어간 사진을 볼 수 있어요')}else toast('저장했습니다')})});
 }
 function coachForm(){
   modal(`<h3>코치 정보</h3><form id="coachForm" style="display:flex;flex-direction:column;gap:12px"><label class="form-field">코치 이름 (공유 이미지에 표시)<input id="f-coach" maxlength="20" value="${esc(S.coach)}"></label>
@@ -1759,7 +1760,7 @@ document.addEventListener('click',async e=>{
     case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
     case 'pro-on':S.plan='premium';TRIAL=false;trialBar();markDirty();premiumSheet();renderMain();toast('프로를 시작했어요 (테스트)');break;
-    case 'trial-on':TRIAL=true;trialBar();closeModal();renderMain();toast('프로를 써보는 중이에요. 저장은 안 돼요');break;
+    case 'trial-on':TRIAL=true;trialBar();renderMain();premiumSheet();break; // 써보기: first the 상호·코치 이름 form, then the card
     case 'trial-off':TRIAL=false;stripTrialErase();trialBar();markDirty();closeModal();renderMain();toast('써보기를 끝냈어요');break;
     case 'pro-off':S.plan='free';markDirty();closeModal();renderMain();toast('무료 버전으로 돌아왔어요');break;
     case 'inbody':modal(`<h3>인바디 결과지로 자동 입력</h3><p style="margin:0;color:var(--muted);font-size:14px">갤러리의 인바디 결과지 사진을 고르면 체중·체지방률·골격근량·측정일을 읽어서 채워드려요. 어느 쪽 기록에 넣을까요?</p>
