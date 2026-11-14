@@ -1129,12 +1129,12 @@ const BC_KG={m:{water:.62,protein:.166,mineral:.0573},f:{water:.55,protein:.147,
 let BC_STD=BC_STDS.f;const bcUse=(sex,height)=>{const g=sex==='m'?'m':'f',h=parseFloat(height)/100;BC_STD={...BC_STDS[g]};
   if(h>1&&h<2.3){const sw=h*h*(g==='m'?22:21);for(const k of ['water','protein','mineral']){const m=sw*BC_KG[g][k],d=10;BC_STD[k]=[Math.round(m*.9*d)/d,Math.round(m*1.1*d)/d]}}};
 const bcUnit=k=>k==='fat'?'%':k==='water'?'L':'kg',bcDU=k=>k==='fat'?'%p':bcUnit(k);const sexLabel=sex=>sex==='m'?'남성':'여성';
-const BC_COL={ok:'#9BE22E',high:'#FF3B3B'};
+const BC_COL={ok:'#FF9ECF',plus:'#9BE22E',high:'#FF3B3B'}; // ok=기준 안(핑크), plus=기준 넘음(초록, 체지방 제외)
 // each shortage has its own colour; too little body fat (weak, very thin) is pale sky blue
 const BC_LOW={mineral:'#B48CFF',protein:'#FFD23F',water:'#3D9BFF',fat:'#CDEFFF'};
-const BC_STXT={low:'부족',ok:'표준',high:'과다',plus:'충분'};
+const BC_STXT={low:'부족',ok:'기준',high:'과다',plus:'충분'};
 const bcSt=(k,v)=>v<BC_STD[k][0]?'low':v>BC_STD[k][1]?(k==='fat'?'high':'plus'):'ok';
-const bcCol=(k,s)=>s==='low'?BC_LOW[k]:s==='plus'?BC_COL.ok:BC_COL[s];
+const bcCol=(k,s)=>s==='low'?BC_LOW[k]:BC_COL[s];
 // % of body weight for one record, or null when something is missing
 function bcVals(r){const f=parseFloat(r.fat);if(isNaN(f))return null;const v={fat:f};
   for(const [k] of BCM){const n=parseFloat(r[k]);if(!(n>0))return null;v[k]=n}return v}
@@ -1249,7 +1249,7 @@ function renderBC(d,ratio,scale=1){
   const gx=40,gy=pTop+pH+(tall?24:18),gw=1000,gh=H-(tall?62:46)-gy;
   x.fillStyle='rgba(255,255,255,.07)';rr(x,gx,gy,gw,gh,22);x.fill();
   x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?26:23}px ${F}`;x.fillText('체성분 변화 그래프',gx+28,gy+(tall?48:40));
-  x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('연두 = 표준  ·  빨강 = 넘친 만큼  ·  점선 칸 = 모자란 만큼',gx+28,gy+(tall?80:68));
+  x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('분홍 = 기준  ·  초록 = 충분  ·  빨강 = 과다  ·  점선 칸 = 모자란 만큼',gx+28,gy+(tall?80:68));
   const base=gy+gh-(tall?108:96),avail=base-(gy+(tall?120:100)),unit=avail/1.45,topY=base-unit,LOP=.55;
   const sc2=(kk,v)=>{const [a,b]=BC_STD[kk];if(v<a)return Math.max(.15,LOP*(1-(a-v)/a*5));if(v>b)return Math.min(1.45,1+(v-b)/b*1.5);return LOP+(1-LOP)*(v-a)/(b-a)};
   x.fillStyle='rgba(155,226,46,.08)';x.fillRect(gx+28,topY,gw-56,unit*(1-LOP));
@@ -1261,8 +1261,8 @@ function renderBC(d,ratio,scale=1){
   BC_KEYS.forEach((kk,i)=>{const c0=gx+110+gwid*i+gwid/2;
     [[vb,'비포',-1],[va,'애프터',1]].forEach(([v,t,sg])=>{const val=v[kk],s=bcSt(kk,val),bx=c0+sg*(bw/2+8)-bw/2;
       const r=sc2(kk,val),h=r*unit,hb=Math.min(r,1)*unit;
-      x.fillStyle=s==='low'?BC_LOW[kk]:BC_COL.ok;rr(x,bx,base-hb,bw,hb,r>1?0:8);x.fill();
-      if(r>1){x.fillStyle=s==='high'?BC_COL.high:BC_COL.ok;x.beginPath();x.moveTo(bx,base-hb);x.lineTo(bx,base-h+8);x.arcTo(bx,base-h,bx+8,base-h,8);x.lineTo(bx+bw-8,base-h);x.arcTo(bx+bw,base-h,bx+bw,base-h+8,8);x.lineTo(bx+bw,base-hb);x.closePath();x.fill()}
+      x.fillStyle=s==='low'?BC_LOW[kk]:s==='plus'?BC_COL.plus:BC_COL.ok;rr(x,bx,base-hb,bw,hb,r>1?0:8);x.fill();
+      if(r>1){x.fillStyle=s==='high'?BC_COL.high:BC_COL.plus;x.beginPath();x.moveTo(bx,base-hb);x.lineTo(bx,base-h+8);x.arcTo(bx,base-h,bx+8,base-h,8);x.lineTo(bx+bw-8,base-h);x.arcTo(bx+bw,base-h,bx+bw,base-h+8,8);x.lineTo(bx+bw,base-hb);x.closePath();x.fill()}
       let hTop=h;if(r<LOP){const gt=base-LOP*unit,gh2=(LOP-r)*unit,cc=BC_LOW[kk];hTop=LOP*unit;
         x.globalAlpha=.3;x.fillStyle=cc;x.fillRect(bx,gt,bw,gh2);x.globalAlpha=1;
         x.setLineDash([6,5]);x.lineWidth=3;x.strokeStyle=cc;x.strokeRect(bx+1.5,gt+1.5,bw-3,gh2-3);x.setLineDash([]);
