@@ -314,6 +314,18 @@ body.locked{overflow:hidden}
 .secbar .sb-home{flex:0 0 46px}
 .secbar button.is-on.sb-ba{background:#111416;color:#35C8AF}.secbar button.is-on.sb-bc{background:#12458F;color:#9BE22E}
 @media (min-width:961px){.secbar{top:76px}}
+/* each feature's own room: its own header + its own client list */
+.room-hd{border-radius:22px;padding:22px 20px;color:#fff;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.room-hd--ba{background:radial-gradient(120% 120% at 100% 0,#24524a,#111416 60%)}.room-hd--bc{background:linear-gradient(160deg,#12458F,#0A2552)}
+.room-hd .ri{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.1)}
+.room-hd--ba .ri{color:#35C8AF}.room-hd--bc .ri{color:#9BE22E}.room-hd .ri .i{width:24px;height:24px}
+.room-hd h2{margin:4px 0 0;font-size:26px;letter-spacing:-.01em}
+.room-hd p{margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.75)}
+.room-hd ol{margin:4px 0 0;padding:0;list-style:none;display:flex;gap:6px;flex-wrap:wrap}
+.room-hd ol li{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.88)}
+.room-hd .btn{align-self:flex-start;margin-top:8px;height:44px;padding:0 18px;border-radius:999px;font-weight:700}
+.room-hd--ba .btn{background:#35C8AF;color:#06201C}.room-hd--bc .btn{background:#9BE22E;color:#14250A}
+.room-list h3{margin:0 0 10px;font-size:17px}.room-list h3 small{color:var(--muted);font-weight:500;font-size:13px;margin-left:6px}
 @media (min-width:961px){.hero{margin:0;border-radius:22px}.hs__s{height:440px}.hs__tx{left:48px;width:min(40%,360px)}}
 </style>
 
@@ -805,9 +817,23 @@ const HOME_SLIDES=[
 ];
 let homeGo=null,homeTimer=null,homeIdx=0;
 const SECTIONS=[{key:'ba',label:'비포·애프터',icon:'camera'},{key:'bc',label:'체성분 비교',icon:'layers'}];
-let sec='ba';
+let sec='ba',room=null;
+const ROOMS={
+  ba:{title:'비포·애프터 만들기',text:'사진 비교할 고객을 고르거나 새로 등록하세요.',steps:['① 사진 2장 넣기','② 자동 맞추기','③ 공유 이미지','④ 기록 저장'],pick:'사진 비교할 고객'},
+  bc:{title:'체성분 비교 분석',text:'인바디 결과를 비교할 고객을 고르거나 새로 등록하세요.',steps:['① 인바디 숫자 넣기','② 체성분 그림','③ 이미지 저장','④ 기록 저장'],pick:'체성분 비교할 고객'}};
+function roomHTML(){const R=ROOMS[room],n=S.clients.filter(c=>!c.sample).length,x=SECTIONS.find(v=>v.key===room);
+  return `${secBar()}
+  <section class="room-hd room-hd--${room}"><span class="ri">${ic(x.icon)}</span><h2>${R.title}</h2><p>${R.text}</p><ol>${R.steps.map(t=>`<li>${t}</li>`).join('')}</ol>
+    <button type="button" class="btn" data-act="add-client">${ic('plus')}새 고객 등록</button></section>
+  <section class="card room-list"><h3>${R.pick} <small>총 ${n}명</small></h3>
+    <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="roomSearch" placeholder="이름 또는 전화번호 검색" autocomplete="off" value="${esc(query)}"></label>
+    <div class="client-list" id="roomList" style="margin-top:10px"></div></section>`}
+function roomMount(){const box=$('#roomList'),inp=$('#roomSearch');if(!box)return;
+  const fill=()=>{renderRail();box.innerHTML=$('#clientList').innerHTML};fill();
+  inp.addEventListener('input',()=>{query=inp.value;$('#search').value=query;const hit=findByPhone(query);
+    if(hit){S.activeId=hit.id;mode=null;markDirty();renderAll();toast(`${hit.name} 고객 기록을 불러왔습니다`);return}fill()})}
 function secBar(){return `<nav class="secbar" aria-label="기능 선택"><button type="button" class="sb-home" data-act="home" aria-label="처음 화면">${ic('home')}</button>${SECTIONS.map(x=>`<button type="button" class="sb-${x.key} ${sec===x.key?'is-on':''}" data-act="sec" data-sec="${x.key}" aria-pressed="${sec===x.key}">${ic(x.icon)}${x.label}</button>`).join('')}</nav>`}
-function goSection(k){sec=k;homeGo=null;closeModal();if(S.clients.some(x=>!x.sample))clientsSheet();else clientForm(null)}
+function goSection(k){sec=k;room=k;homeGo=null;mode=null;query='';closeModal();S.activeId=null;markDirty();renderAll();window.scrollTo({top:0})}
 function homeHTML(){
   const has=S.clients.some(x=>!x.sample),n=HOME_SLIDES.length;
   return `<section class="home" aria-label="시작 화면">
@@ -878,6 +904,7 @@ function homeSlide(i){const box=$('#homeSlides');if(!box||!box.children[i])retur
 
 function renderMain(){
   const c=active(),m=$('#main');
+  if(!c&&room){m.innerHTML=roomHTML();roomMount();return}
   if(!c){m.innerHTML=homeHTML();homeMount();return}
   const per=periodText(c);
   m.innerHTML=`${secBar()}
@@ -1392,7 +1419,7 @@ function clientForm(c){
     });
 }
 function clientsSheet(){
-  modal(`<h3><span style="display:block;font-size:12px;letter-spacing:.08em;color:${sec==='bc'?'#12458F':'var(--accent)'};margin-bottom:2px">${sec==='bc'?'체성분 비교':'비포·애프터'}</span>고객 목록 <small style="color:var(--accent);font-size:15px;font-weight:700;margin-left:4px">총 ${S.clients.filter(c=>!c.sample).length}명</small></h3><label class="search"><svg class="i"><use href="#i-search"/></svg><input id="m-search" placeholder="이름 또는 전화번호 검색" autocomplete="off" value="${esc(query)}"></label>
+  modal(`<h3>${active()||room?`<span style="display:block;font-size:12px;letter-spacing:.08em;color:${sec==='bc'?'#12458F':'var(--accent)'};margin-bottom:2px">${sec==='bc'?'체성분 비교':'비포·애프터'}</span>`:''}고객 목록 <small style="color:var(--accent);font-size:15px;font-weight:700;margin-left:4px">총 ${S.clients.filter(c=>!c.sample).length}명</small></h3><label class="search"><svg class="i"><use href="#i-search"/></svg><input id="m-search" placeholder="이름 또는 전화번호 검색" autocomplete="off" value="${esc(query)}"></label>
     <div class="client-list" id="mClientList"></div><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button>`,sh=>{
       const fill=()=>{renderRail();sh.querySelector('#mClientList').innerHTML=$('#clientList').innerHTML};fill();
       sh.querySelector('#m-search').addEventListener('input',e=>{query=e.target.value;$('#search').value=query;const hit=findByPhone(query);
@@ -1596,9 +1623,9 @@ document.addEventListener('click',async e=>{
     case 'add-client':homeGo=null;closeModal();clientForm(null);break;
     case 'home-bc':goSection('bc');break;
     case 'go-sec':goSection(b.dataset.sec==='bc'?'bc':'ba');break;
-    case 'sec':{const k=b.dataset.sec==='bc'?'bc':'ba';if(k!==sec){sec=k;mode=null;renderMain();window.scrollTo({top:0})}break}
+    case 'sec':{const k=b.dataset.sec==='bc'?'bc':'ba';if(!active()){goSection(k);break}if(k!==sec){sec=k;room=k;mode=null;renderMain();window.scrollTo({top:0})}break}
     case 'home-dot':clearInterval(homeTimer);homeSlide(+b.dataset.i);break;
-    case 'home':homeGo=null;if(mode)mode=null;S.activeId=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
+    case 'home':homeGo=null;room=null;if(mode)mode=null;S.activeId=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
     case 'edit-client':clientForm(c);break;
     case 'clients':clientsSheet();break;
     case 'pick':S.activeId=b.dataset.id;mode=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
@@ -1716,6 +1743,7 @@ async function openAccount(acc,{coachName}={}){
   if(saved&&Array.isArray(saved.clients))S={...S,...saved};
   else{const sm=makeSample();S.clients=[sm];S.activeId=sm.id;S.coach=coachName||'코치';await persist()}
   if(S.activeId&&!active())S.activeId=null;
+  S.clients.forEach(c=>{if(c.sample&&c.name&&c.name!=='예시 고객')c.sample=false});
   {const c=active();if(c)await Promise.all([ensurePhoto(c.before.photo),ensurePhoto(c.after.photo)])}
   await Promise.all(S.clients.flatMap(c=>[...(c.history||[]).map(async h=>{if(!h.thumb){const t=await DB.get('thumb:'+h.id);if(t)thumbs[h.id]=t}})]));
   $('#auth').hidden=true;document.body.classList.remove('locked');
