@@ -281,10 +281,37 @@ body.locked{overflow:hidden}
 .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* home: swipeable feature banners shown when no client is open (ad-banner style, full width on phones) */
+.home{display:flex;flex-direction:column;gap:14px;min-width:0}
+.hero{position:relative;margin:-16px -16px 0;overflow:hidden;background:#111416}
+.hs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+.hs::-webkit-scrollbar{display:none}
+.hs__s{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;height:clamp(380px,58vh,470px);color:#fff;overflow:hidden}
+.hs__s--ba{background:#111416}.hs__s--bc{background:#0F3F86}
+.hs__s canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hs__tx{position:absolute;left:22px;top:0;bottom:56px;width:min(54%,280px);display:flex;flex-direction:column;justify-content:center;gap:10px;z-index:1}
+.hs__no{font-family:var(--font-num);font-size:11px;letter-spacing:.16em;font-weight:700}
+.hs__s--ba .hs__no{color:#35C8AF}.hs__s--bc .hs__no{color:#9BE22E}
+.hs__tx h3{margin:0;font-size:clamp(30px,8.6vw,40px);line-height:1.15;letter-spacing:-.02em;font-weight:800;word-break:keep-all;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.hs__tx p{margin:0;font-size:13.5px;line-height:1.55;color:rgba(255,255,255,.82);word-break:keep-all;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.hs__go{align-self:flex-start;margin-top:6px;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.hs__s--ba .hs__go{background:#fff;color:#111416}.hs__s--bc .hs__go{background:#9BE22E;color:#14250A}
+.hs__dots{position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;gap:6px;z-index:2;pointer-events:none}
+.hs__dots button{pointer-events:auto;width:7px;height:7px;border-radius:7px;background:rgba(255,255,255,.4);padding:0;transition:width .25s,background .25s}
+.hs__dots button.is-on{width:20px;background:#fff}
+.hs__cnt{position:absolute;right:16px;bottom:12px;z-index:2;font:600 11.5px/1 var(--font-num);color:#fff;background:rgba(0,0,0,.35);padding:5px 9px;border-radius:999px;pointer-events:none}
+.tools-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:12px 8px}
+.tools-row button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 2px;border-radius:14px;font-size:12.5px;font-weight:600;color:var(--ink);text-align:center;line-height:1.25;word-break:keep-all}
+.tools-row button:active{background:var(--surface-2)}
+.tools-row .ti{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--surface-2)}
+.tools-row .ti .i{width:22px;height:22px}
+.tools-row .ti--ba{background:#111416;color:#35C8AF}.tools-row .ti--bc{background:#12458F;color:#9BE22E}.tools-row .ti--add{background:var(--accent);color:var(--accent-ink)}
+.home__note{margin:0;font-size:13px;color:var(--muted);line-height:1.5;text-align:center;padding:0 8px}
+@media (min-width:961px){.hero{margin:0;border-radius:22px}.hs__s{height:440px}.hs__tx{left:48px;width:min(40%,360px)}}
 </style>
 
 <header class="topbar"><div class="topbar__in">
-  <div class="brand"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><div><b>BODYLOG</b><small>바디로그 · 비포애프터</small></div></div>
+  <div class="brand" data-act="home" role="button" tabindex="0" aria-label="처음 화면으로" style="cursor:pointer"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><div><b>BODYLOG</b><small>바디로그 · 비포애프터</small></div></div>
   <span class="save-state" id="saveState"><span class="dot"></span><span id="saveText">저장됨</span></span>
   <button class="coach" id="coachBtn" type="button"><span class="av" id="coachAv">코</span><span id="coachName">코치</span></button>
 </div></header>
@@ -763,10 +790,83 @@ function deltaCell(a,b,unit,lowerIsGood){
 }
 const METRICS=[['weight','체중','kg',true,'kg'],['fat','체지방률','%',true,'%p'],['muscle','골격근량','kg',false,'kg'],['visceral','내장지방','',true,'']];
 
+/* ---------- home: swipeable feature banners (add a slide = add an entry here) ---------- */
+const HOME_SLIDES=[
+  {key:'ba',no:'BEFORE & AFTER',title:'비포·애프터<br>만들기',text:'사진 2장이면 자세·크기 자동 맞춤, 얼굴 가림까지 한 번에',go:'add-client',btn:'지금 만들어 보세요'},
+  {key:'bc',no:'BODY COMPOSITION',title:'체성분<br>비교 분석',text:'인바디 숫자만 넣으면 전·후 몸속 변화를 그림으로',go:'home-bc',btn:'지금 분석해 보세요'},
+];
+let homeGo=null,homeTimer=null,homeIdx=0;
+function homeHTML(){
+  const has=S.clients.some(x=>!x.sample),n=HOME_SLIDES.length;
+  return `<section class="home" aria-label="시작 화면">
+    <div class="hero">
+      <div class="hs" id="homeSlides">${HOME_SLIDES.map((s,i)=>`<article class="hs__s hs__s--${s.key}" aria-label="${s.title.replace('<br>',' ')}" aria-roledescription="slide">
+        <canvas data-homeart="${s.key}" aria-hidden="true"></canvas>
+        <div class="hs__tx"><span class="hs__no">${s.no}</span><h3>${s.title}</h3><p>${s.text}</p>
+          <button type="button" class="btn hs__go" data-act="${s.go}">${s.btn}</button></div>
+      </article>`).join('')}</div>
+      <div class="hs__dots">${HOME_SLIDES.map((s,i)=>`<button type="button" data-act="home-dot" data-i="${i}" aria-label="${i+1}번째 화면" class="${i===0?'is-on':''}"></button>`).join('')}</div>
+      <span class="hs__cnt num" id="homeCnt">1 / ${n}</span>
+    </div>
+    <div class="card tools-row">
+      <button type="button" data-act="add-client"><span class="ti ti--ba">${ic('camera')}</span>비포·애프터</button>
+      <button type="button" data-act="home-bc"><span class="ti ti--bc">${ic('layers')}</span>체성분 비교</button>
+      <button type="button" data-act="clients"><span class="ti">${ic('users')}</span>고객 목록</button>
+      <button type="button" data-act="add-client"><span class="ti ti--add">${ic('plus')}</span>새 고객 등록</button>
+    </div>
+    <p class="home__note">${has?'저장한 고객은 <b>고객 목록</b>에서 이름이나 전화번호로 다시 불러올 수 있어요.':'고객을 등록하면 사진과 체성분 기록이 고객 파일에 쌓여요.'}</p>
+  </section>`;
+}
+function homeArt(){
+  let sm=null;try{sm=makeSample()}catch(e){}
+  document.querySelectorAll('[data-homeart]').forEach(cv=>{
+    const r=cv.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),W=Math.round((r.width||390)*dpr),H=Math.round((r.height||440)*dpr);
+    if(!W||!H)return;cv.width=W;cv.height=H;const x=cv.getContext('2d'),k=H/440;
+    const fade=(c0)=>{const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,c0+'f2');g.addColorStop(.42,c0+'b0');g.addColorStop(.62,c0+'00');x.fillStyle=g;x.fillRect(0,0,W,H)};
+    if(cv.dataset.homeart==='ba'){
+      const g=x.createRadialGradient(W*.72,H*.45,10,W*.72,H*.45,Math.max(W,H)*.75);g.addColorStop(0,'#24524a');g.addColorStop(1,'#111416');x.fillStyle=g;x.fillRect(0,0,W,H);
+      if(sm){
+        const right=W-14*k,fh=H*.80,fy=H*.07,gap=10*k,fw=Math.min((W*.60-gap)/2,fh*.62),fx0=right-fw*2-gap;
+        [['before','BEFORE','rgba(60,66,70,.92)','#fff'],['after','AFTER','#35C8AF','#06201C']].forEach(([s,L,bg,fg],i)=>{
+          const fx=fx0+i*(fw+gap);x.save();x.shadowColor='rgba(0,0,0,.45)';x.shadowBlur=24*k;x.fillStyle='#222';rr(x,fx,fy,fw,fh,16*k);x.fill();x.restore();
+          x.save();rr(x,fx,fy,fw,fh,16*k);x.clip();x.translate(fx,fy);drawRec(x,sm[s],fw,fh,true);x.restore();
+          x.font=`700 ${11*k}px Sora, sans-serif`;const tw=x.measureText(L).width+16*k;
+          x.fillStyle=bg;rr(x,fx+8*k,fy+8*k,tw,22*k,8*k);x.fill();x.fillStyle=fg;x.textBaseline='middle';x.fillText(L,fx+16*k,fy+19.5*k);
+        });
+        const t='87일 · -3.6kg';x.font=`700 ${13*k}px "IBM Plex Sans KR", sans-serif`;const tw=x.measureText(t).width+24*k,tx=fx0+fw+gap/2-tw/2,ty=fy+fh-40*k;
+        x.fillStyle='rgba(17,20,22,.88)';rr(x,tx,ty,tw,28*k,14*k);x.fill();x.fillStyle='#35C8AF';x.textBaseline='middle';x.fillText(t,tx+12*k,ty+14.5*k);
+      }
+      fade('#111416');
+    }else{
+      const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#12458F');g.addColorStop(1,'#0A2552');x.fillStyle=g;x.fillRect(0,0,W,H);
+      let card=null;if(sm){try{card=renderBC(bcData(sm),'34',1)}catch(e){}}
+      if(card){ // the body figures + bars from the real 3:4 card, placed on the right
+        const sx=card.width*.36,sw=card.width-sx,sy=card.height*HOME_BC_CROP[0],sh=card.height*(HOME_BC_CROP[1]-HOME_BC_CROP[0]),dh=H*.82,dw=dh*sw/sh,dx=W-dw+10*k,dy=(H-dh)/2-14*k;
+        x.drawImage(card,sx,sy,sw,sh,dx,dy,dw,dh);
+      }
+      fade('#0F3F86');
+    }
+  });
+}
+const HOME_BC_CROP=[.205,.6];
+function homeMount(){
+  clearInterval(homeTimer);homeIdx=0;
+  const box=$('#homeSlides');if(!box)return;
+  const dots=[...document.querySelectorAll('[data-act="home-dot"]')],cnt=$('#homeCnt');
+  const idx=()=>Math.max(0,Math.min(HOME_SLIDES.length-1,Math.round(box.scrollLeft/(box.clientWidth||1))));
+  box.addEventListener('scroll',()=>{homeIdx=idx();dots.forEach((d,i)=>d.classList.toggle('is-on',i===homeIdx));if(cnt)cnt.textContent=`${homeIdx+1} / ${HOME_SLIDES.length}`},{passive:true});
+  const stop=()=>clearInterval(homeTimer);['touchstart','pointerdown','wheel'].forEach(ev=>box.addEventListener(ev,stop,{passive:true}));
+  // banner-style auto turn until the user touches it
+  if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)&&HOME_SLIDES.length>1)
+    homeTimer=setInterval(()=>{if(!document.body.contains(box)){clearInterval(homeTimer);return}homeSlide((homeIdx+1)%HOME_SLIDES.length)},4500);
+  requestAnimationFrame(homeArt);try{document.fonts.ready.then(()=>{if(document.body.contains(box))homeArt()})}catch(e){}
+}
+let homeRT;window.addEventListener('resize',()=>{clearTimeout(homeRT);homeRT=setTimeout(()=>{if($('#homeSlides'))homeArt()},200)});
+function homeSlide(i){const box=$('#homeSlides');if(!box||!box.children[i])return;box.scrollTo({left:box.clientWidth*i,behavior:'smooth'})}
+
 function renderMain(){
   const c=active(),m=$('#main');
-  if(!c&&S.clients.length){m.innerHTML=`<div class="card" style="text-align:center;padding:48px 20px"><h2 style="margin:0 0 6px">새 고객을 입력할 차례예요</h2><p style="color:var(--muted);margin:0 0 18px">저장한 고객은 <b>고객 목록</b>에서 이름이나 전화번호로 다시 불러올 수 있어요.</p><div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn btn--line" data-act="clients">${ic('users')}고객 목록</button><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button></div></div>`;return}
-  if(!c){m.innerHTML=`<div class="card" style="text-align:center;padding:48px 20px"><h2 style="margin:0 0 6px">첫 고객을 등록해보세요</h2><p style="color:var(--muted);margin:0 0 18px">고객을 등록하면 비포·애프터 사진과 체성분 수치를 기록할 수 있습니다.</p><button class="btn btn--primary" data-act="add-client">${ic('plus')}새 고객 등록</button></div>`;return}
+  if(!c){m.innerHTML=homeHTML();homeMount();return}
   const per=periodText(c);
   m.innerHTML=`
   <section class="client-head">
@@ -1479,13 +1579,16 @@ JSON 하나로만 답하세요. 단위 없이 숫자만:
 }
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;const c=active();
-  if(act==='close-overlay'){if(e.target===b)closeModal();return}
+  if(act==='close-overlay'){if(e.target===b){homeGo=null;closeModal()}return}
   switch(act){
-    case 'add-client':closeModal();clientForm(null);break;
+    case 'add-client':homeGo=null;closeModal();clientForm(null);break;
+    case 'home-bc':closeModal();clientForm(null);homeGo='bc';break;
+    case 'home-dot':clearInterval(homeTimer);homeSlide(+b.dataset.i);break;
+    case 'home':homeGo=null;if(mode)mode=null;S.activeId=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
     case 'edit-client':clientForm(c);break;
     case 'clients':clientsSheet();break;
     case 'pick':S.activeId=b.dataset.id;mode=null;closeModal();markDirty();renderAll();window.scrollTo({top:0,behavior:'smooth'});break;
-    case 'close':closeModal();break;
+    case 'close':homeGo=null;closeModal();break;
     case 'ask-delete':document.getElementById('delConfirm').hidden=false;break;
     case 'cancel-delete':document.getElementById('delConfirm').hidden=true;break;
     case 'pin-change':pinChangeForm();break;
@@ -1589,6 +1692,7 @@ function renderAll(){
   syncPhotos();
   $('#coachName').textContent=S.coach;$('#coachAv').textContent=initials(S.coach);
   renderRail();renderMain();
+  if(homeGo==='bc'&&active()){homeGo=null;setTimeout(()=>{const sec=document.querySelector('.bc-card');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'})},350)}
 }
 
 /* ---------- boot ---------- */
