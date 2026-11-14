@@ -285,6 +285,23 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .terms{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:-6px}.terms summary{cursor:pointer;color:var(--accent);font-weight:600}.terms p{margin:8px 0 0}
 .linkbtn{color:var(--muted);font-size:13px;text-decoration:underline;padding:4px 0}
 .auth__note{margin:0;color:var(--muted);font-size:12px;line-height:1.55;text-align:center}
+.wel{display:flex;flex-direction:column;gap:12px}
+.wel__top{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:6px 0 4px}
+.wel__top .brand__mark{width:64px;height:64px;border-radius:18px}
+.wel__top h2{margin:6px 0 0;font-size:26px;letter-spacing:-.02em}
+.wel__top p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;word-break:keep-all}
+.wel__lab{font-size:13px;color:var(--muted);font-weight:600;margin:6px 2px -2px}
+.wbtn{width:100%;height:52px;border-radius:14px;font-size:15.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid transparent}
+.wbtn small{font-weight:500;font-size:12px;opacity:.7}
+.wbtn--kakao{background:#FEE500;color:#191600}
+.wbtn--dark{background:var(--ink);color:var(--surface)}
+.wbtn--soft{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
+.wbtn--line{background:transparent;color:var(--ink);border-color:var(--line)}
+.wel__back{align-self:flex-start;color:var(--muted);font-size:14px;font-weight:600;padding:2px 0}
+.fpw{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fpw button{height:56px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-weight:700;font-size:14px;line-height:1.2}
+.fpw button small{display:block;font-weight:500;font-size:11px;color:var(--muted);margin-top:3px}
+.fpw .k{background:#FEE500;color:#191600;border-color:transparent}.fpw .k small{color:#5b5300}
 /* cover screen shown for ~1.8s (or until tapped) before login / the app */
 .splash{position:fixed;inset:0;z-index:90;background:#0F1214;color:#EEF2F1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:max(56px,env(safe-area-inset-top,0px)) 24px max(40px,env(safe-area-inset-bottom,0px));overflow:hidden;cursor:pointer;transition:opacity .45s ease,visibility .45s}
 .splash.is-out{opacity:0;visibility:hidden}
@@ -1886,13 +1903,34 @@ const TERMS=`<p><b>1. 저장하는 정보</b><br>코치 이메일, 고객 이름
 <p><b>4. 보관과 삭제</b><br>회원 탈퇴를 하면 계정과 고객 기록·사진이 모두 바로 지워지고 되돌릴 수 없어요.</p>
 <p><b>5. 이용 제한</b><br>만 14세 미만은 가입할 수 없어요. 다른 사람의 사진을 동의 없이 올리거나 퍼뜨리면 안 돼요.</p>
 <p><b>6. 운영자</b><br>피다다이어트(PA다이어트) · 대표 한효정 · 사업자등록번호 517-14-01969<br>충청남도 서산시 예천4로 48-12</p>`;
+const SOON_KAKAO='카카오로 시작하기는 준비 중이에요. 지금은 이메일로 가입해주세요.';
+const SOON_FIND='이메일·카톡으로 받기는 준비 중이에요. 지금은 아래에서 이 휴대폰에서 바로 바꿀 수 있어요.';
+const KAKAO_ICON='<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#191600" d="M12 3.5C6.75 3.5 2.5 6.86 2.5 11c0 2.66 1.76 5 4.4 6.33l-.9 3.3c-.08.3.26.54.52.37l3.93-2.6c.5.07 1.02.1 1.55.1 5.25 0 9.5-3.36 9.5-7.5S17.25 3.5 12 3.5z"/></svg>';
+function renderWelcome(msg=''){
+  $('#auth').innerHTML=`<div class="auth__card wel">
+    <div class="wel__top"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><b style="font:700 22px/1 Sora,var(--font-num);letter-spacing:.06em">BODYLOG</b>
+      <h2>환영합니다</h2><p>고객의 비포·애프터와 체성분 변화를<br>한 곳에서 기록하고 보여주세요</p></div>
+    <p class="wel__lab">가입 방법 선택</p>
+    <button type="button" class="wbtn wbtn--kakao" data-auth="kakao">${KAKAO_ICON}카카오로 시작하기 <small>준비 중</small></button>
+    <button type="button" class="wbtn wbtn--dark" data-auth="signup">✉ 이메일로 가입하기 (무료)</button>
+    <button type="button" class="wbtn wbtn--line" data-auth="login">로그인</button>
+    <p id="a-err" class="auth__err" style="text-align:center" ${msg?'':'hidden'}>${esc(msg)}</p>
+    ${/KAKAOTALK|NAVER\(|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent)?`<p class="auth__err" style="background:var(--danger-soft);border-radius:12px;padding:10px 12px;line-height:1.55"><b>카톡 안에서 열면 창을 닫을 때 계정과 고객 기록이 지워질 수 있어요.</b><br>아래 오른쪽 공유 버튼(↑)을 눌러 <b>'Safari로 열기'</b>(갤럭시는 '다른 브라우저로 열기')를 눌러 사용해주세요.</p>`:''}
+    <button type="button" class="auth__demo" data-auth="demo">가입 없이 둘러보기</button>
+    <p class="auth__note">지금은 이 휴대폰(브라우저)에만 계정과 고객 기록이 저장돼요.</p>
+  </div>`;
+  $('#auth').hidden=false;document.body.classList.add('locked');
+}
 function renderAuth(msg=''){
+  if(authMode==='welcome')return renderWelcome(msg);
   const su=authMode==='signup',rs=authMode==='reset';
   $('#auth').innerHTML=`<div class="auth__card">
+    <button type="button" class="wel__back" data-auth="welcome">‹ 처음 화면</button>
     <div class="brand"><span class="brand__mark" aria-hidden="true"><i></i><i></i></span><div><b>BODYLOG</b><small>코치 전용 비포·애프터 기록</small></div></div>
     <div class="lseg" role="tablist"><button type="button" data-auth="login" class="${su?'':'is-on'}">로그인</button><button type="button" data-auth="signup" class="${su?'is-on':''}">회원가입</button></div>
     <form id="authForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
       <label class="form-field">이메일 (아이디)<input id="a-email" type="email" inputmode="email" autocomplete="username" placeholder="coach@example.com"></label>
+      ${rs?`<p class="wel__lab" style="margin:0">비밀번호 받는 방법</p><div class="fpw"><button type="button" data-auth="find-mail">✉ 이메일로 받기<small>준비 중</small></button><button type="button" class="k" data-auth="find-kakao">카톡으로 받기<small>준비 중</small></button></div><p class="wel__lab" style="margin:4px 0 0">이 휴대폰에서 바로 바꾸기</p>`:''}
       ${rs?'<p class="auth__note" style="text-align:left">가입한 이메일과 새 비밀번호를 넣으면 비밀번호가 바뀌어요. 고객 기록은 그대로 남아요.</p>':''}
       <label class="form-field">${rs?'새 비밀번호':'비밀번호'} (숫자 6자리)<input id="a-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="${su||rs?'new-password':'current-password'}" placeholder="••••••"></label>
       ${rs?`<label class="form-field">새 비밀번호 확인<input id="a-pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••••"></label>`:''}
@@ -1947,6 +1985,8 @@ async function onAuth(e){
 }
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-auth]');if(!b)return;
   if(b.dataset.auth==='demo'){sess.set('demo');await openAccount({id:'demo',email:'',demo:true},{coachName:'코치'});toast('둘러보기 모드예요. 기록은 이 기기에만 남아요');return}
+  if(b.dataset.auth==='kakao'){const p=$('#a-err');if(p){p.textContent=SOON_KAKAO;p.hidden=false}return}
+  if(b.dataset.auth==='find-mail'||b.dataset.auth==='find-kakao'){const p=$('#a-err');if(p){p.textContent=SOON_FIND;p.hidden=false}return}
   authMode=b.dataset.auth;renderAuth()});
 async function logout(){await persist();sess.set(null);ACC=null;closeModal();renderAuth()}
 
@@ -1959,7 +1999,7 @@ async function logout(){await persist();sess.set(null);ACC=null;closeModal();ren
   if(sid==='demo')return openAccount({id:'demo',email:'',demo:true},{coachName:'코치'});
   const accounts=(await DB.get('accounts'))||[];const acc=sid&&accounts.find(a=>a.id===sid);
   if(acc)return openAccount({id:acc.id,email:acc.email});
-  authMode=accounts.length?'login':'signup';renderAuth();
+  authMode='welcome';renderAuth();
 })();
 })();
 </script>
