@@ -137,6 +137,10 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .frame__empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--stage-muted);font-size:13px;text-align:center;padding:12px}
 .frame__empty .plus{width:52px;height:52px;border-radius:50%;border:1.5px dashed #4a535a;display:grid;place-items:center;color:var(--stage-ink)}
 .frame__empty:hover .plus{border-color:var(--stage-accent);color:var(--stage-accent)}
+.frame.is-scanning::after{content:"";position:absolute;left:0;right:0;top:0;height:22%;pointer-events:none;background:linear-gradient(to bottom,rgba(53,200,175,0),rgba(53,200,175,.32) 85%,#35C8AF);box-shadow:0 2px 12px rgba(53,200,175,.8);animation:alignScan .9s ease-in-out infinite alternate}
+@keyframes alignScan{from{transform:translateY(-100%)}to{transform:translateY(455%)}}
+.frame.is-aligned{animation:alignGlow 1.2s ease-out}
+@keyframes alignGlow{0%{box-shadow:0 0 0 0 rgba(53,200,175,.9)}35%{box-shadow:0 0 0 4px rgba(53,200,175,.85),0 0 24px rgba(53,200,175,.6)}100%{box-shadow:0 0 0 0 rgba(53,200,175,0)}}
 .frame__badge{position:absolute;left:10px;top:10px;font-family:var(--font-num);font-size:11px;font-weight:700;letter-spacing:.14em;padding:5px 9px;border-radius:7px;background:rgba(10,12,14,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;pointer-events:none}
 .frame__badge.after{background:var(--stage-accent);color:#06201C}
 .frame__hint{position:absolute;left:10px;right:10px;bottom:10px;font-size:12px;padding:6px 10px;border-radius:8px;background:rgba(10,12,14,.66);color:#fff;text-align:center;pointer-events:none}
@@ -578,18 +582,55 @@ function autoMask(rec){
   for(let y=-.72*r;y<=.8*r;y+=r*.26,row++){const xs=[];for(let x=-.62*r;x<=.62*r;x+=r*.22)xs.push(x);if(row%2)xs.reverse();xs.forEach(x=>st.push([f.cx+x,f.cy+y,r*.46]))}
   rec.mask=[st];
 }
-async function runAuto(c,{quiet=false}={}){
+async function runAuto(c,{quiet=false,align=true}={}){
   const need=['before','after'].filter(k=>c[k].photo&&!c[k].pose&&!c[k].poseTried);
+  const t0=Date.now();if(align&&!quiet)alignFx(true);
   if(need.length){
-    if(!quiet)toast('몸 위치를 인식하는 중…');
+    if(!quiet&&align)toast('몸 위치를 인식하는 중…');
     try{for(const k of need){c[k].poseTried=true;const p=await detectPose(c[k]);if(p){c[k].pose=p;if(!c[k].mask.length)autoMask(c[k])}}}
-    catch(e){toast('자동 인식을 불러오지 못했습니다. 인터넷 연결을 확인하거나 직접 맞춰주세요');return 0}
+    catch(e){alignFx(false);if(!align){renderMain();return 0}toast('자동 인식을 불러오지 못했습니다. 인터넷 연결을 확인하거나 직접 맞춰주세요');return 0}
   }
-  const n=autoAlign(c);touch(c);await persist();renderMain();
+  // on photo upload: find the body and cover the face only; the photos stay as they are until 자동 맞추기 is pressed
+  if(!align){touch(c);await persist();renderMain();return 0}
+  const from={before:{...c.before.tf},after:{...c.after.tf}};
+  const n=autoAlign(c);
+  if(n&&!quiet){const wait=900-(Date.now()-t0);if(wait>0)await new Promise(r=>setTimeout(r,wait));await alignMove(c,from)}
+  alignFx(false);touch(c);await persist();renderMain();
+  if(n&&!quiet)['before','after'].forEach(k=>{const fr=document.querySelector(`[data-frame="${k}"]`);if(fr){fr.classList.add('is-aligned');setTimeout(()=>fr.classList.remove('is-aligned'),1300)}});
   const missing=['before','after'].filter(k=>c[k].photo&&!c[k].pose);
   if(missing.length)toast(`${missing.map(k=>k.toUpperCase()).join('·')} 사진에서 몸을 찾지 못했습니다. 전신 사진인지 확인하거나 직접 맞춰주세요`);
   else if(n&&!quiet)toast('두 사진의 몸 위치와 크기를 자동으로 맞췄습니다');
   return n;
+}
+
+// 자동 맞추기 effect: a scan line sweeps the photos, then both bodies glide into place along guide lines
+function alignFx(on){document.querySelectorAll('[data-frame]').forEach(fr=>fr.classList.toggle('is-scanning',on))}
+function alignMove(c,from){
+  const to={before:{...c.before.tf},after:{...c.after.tf}},T=1100,t0=performance.now();
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,lerp=(a,b,t)=>a+(b-a)*t;
+  const B=c.before,lower=(B.pose&&B.pose.ank&&(!c.after.pose||c.after.pose.ank))?'ank':'hip';
+  return new Promise(res=>{
+    const step=now=>{
+      const t=Math.min(1,(now-t0)/T),e=ease(t);
+      ['before','after'].forEach(k=>{
+        const r=c[k];if(!r.photo)return;
+        r.tf={s:lerp(from[k].s,to[k].s,e),x:lerp(from[k].x,to[k].x,e),y:lerp(from[k].y,to[k].y,e)};
+        drawFrame(k);
+        const fr=document.querySelector(`[data-frame="${k}"]`),cv=fr&&fr.querySelector('canvas');
+        if(cv&&B.pose&&B.pose[lower]&&photos[B.photo]){
+          const W=cv.clientWidth,H=cv.clientHeight,d=cv.width/Math.max(1,W),x=cv.getContext('2d');
+          const L=layoutOf({tf:to.before},photos[B.photo],W,H);
+          const ys=[L.dy+B.pose.sh[1]*L.sc,L.dy+B.pose[lower][1]*L.sc];
+          x.setTransform(d,0,0,d,0,0);x.globalAlpha=Math.min(1,t*3)*(t>.85?(1-t)/.15:1);
+          x.strokeStyle='#35C8AF';x.lineWidth=2;x.setLineDash([6,5]);
+          ys.forEach(y=>{x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke()});
+          x.setLineDash([]);x.globalAlpha=1;
+        }
+      });
+      if(t<1)requestAnimationFrame(step);else{c.before.tf=to.before;c.after.tf=to.after;res()}
+    };
+    requestAnimationFrame(step);
+  });
 }
 
 /* ---------- face smudge: semi-transparent rough eraser over brushed area only ---------- */
@@ -1819,7 +1860,7 @@ $('#fileInput').addEventListener('change',async e=>{
     c[uploadSide]={...c[uploadSide],photo:id,tf:{s:1,x:0,y:0},mask:[],erase:[],pose:null,poseTried:false};
     if(!c[uploadSide].date)c[uploadSide].date=new Date().toISOString().slice(0,10);
     touch(c);await persist();renderMain();
-    await runAuto(c);
+    await runAuto(c,{quiet:true,align:false});
   }catch(err){toast('사진을 불러오지 못했습니다. JPG나 PNG 파일을 선택해주세요')}
 });
 document.addEventListener('input',e=>{
