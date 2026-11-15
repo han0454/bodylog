@@ -246,7 +246,6 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .srow .tg{flex:none;width:56px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-num);font-size:13px;font-weight:800;letter-spacing:.04em;background:var(--surface);color:var(--muted);border:1.5px solid var(--line)}
 .srow.is-on .tg{background:linear-gradient(140deg,var(--g1),var(--g2));color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(0,0,0,.12)}
 .swm{display:flex;align-items:center;gap:12px;width:100%;min-height:96px;padding:16px 18px;border-radius:20px;text-align:left;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(140deg,#B98AF0,#7A45CC)}
-.swm--hl{background:linear-gradient(140deg,#4FD6BE,#0F8F7A)}
 .swm .tx{flex:1;min-width:0}.swm small{font-size:13px;opacity:.9}
 .swm .pr{flex:none;display:flex;flex-direction:column;align-items:center;font-family:var(--font-num);font-size:28px;font-weight:800;letter-spacing:.04em;line-height:1}
 .swm .pr i{font-style:normal;font-size:22px;margin-top:6px}
@@ -1092,8 +1091,7 @@ function renderMain(){
             <button type="button" class="srow stile--face ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}"><span class="ti">${ic('face')}</span><span class="tx">얼굴 가림<small>지운 부분을 반투명하게 덮어요</small></span><span class="tg">${S.face?'ON':'OFF'}</span></button>
             <button type="button" class="srow stile--name ${S.showName?'is-on':''}" data-act="opt-name" aria-pressed="${S.showName}"><span class="ti">${ic('type')}</span><span class="tx">이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가려서 표시'}</small></span><span class="tg">${S.showName?'ON':'OFF'}</span></button>
             <button type="button" class="srow stile--nums ${S.showNums?'is-on':''}" data-act="opt-nums" aria-pressed="${S.showNums}"><span class="ti">${ic('chart')}</span><span class="tx">수치 표시<small>체중·체지방·근육 변화</small></span><span class="tg">${S.showNums?'ON':'OFF'}</span></button>
-            <button type="button" class="swm ${isPro()?'is-on':''}" data-act="premium"><span class="tx">워터마크<small>${isPro()?(S.wmOff?'없음':esc(wmLabel()))+(TRIAL?' · 써보는 중':' · 눌러서 바꾸기'):'우리가게 이름 알리기'}</small></span><span class="pr">PRO<i>${isPro()?'✓':'🔒'}</i></span></button>
-            <button type="button" class="swm swm--hl ${isPro()?'is-on':''}" data-act="headline"><span class="tx">카드 문구 직접 쓰기<small>${isPro()?(customHL(c)?esc(customHL(c).filter(Boolean).join(' ')):'나이대별 자동 · 눌러서 쓰기')+(TRIAL?' · 써보는 중':''):'큰 제목을 내 말로'}</small></span><span class="pr">PRO<i>${isPro()?'✓':'🔒'}</i></span></button>
+            <button type="button" class="swm ${isPro()?'is-on':''}" data-act="premium"><span class="tx">워터마크<small>${isPro()?(S.wmOff?'없음':esc(wmLabel()))+(TRIAL?' · 써보는 중':' · 눌러서 바꾸기'):'우리가게 이름 알리기 · 카드 문구 쓰기'}</small></span><span class="pr">PRO<i>${isPro()?'✓':'🔒'}</i></span></button>
           </div>
           <button type="button" class="btn btn--primary" style="width:100%" data-act="export">${ic('share')}공유 이미지 만들기</button>
         </div>
@@ -1598,27 +1596,16 @@ function premiumSheet(){
     <ol class="pro-list">${perks.map((t,i)=>`<li><span class="pro-n">${i+1}</span><span>${t}</span></li>`).join('')}</ol>
     <p style="margin:0;color:var(--muted);font-size:12.5px;line-height:1.5"><b style="color:var(--ink)">써보기</b>는 무료예요. 화면에서 프로 기능을 다 써볼 수 있지만, 사진에 'PRO 써보기' 글씨가 덮이고 저장은 안 돼요.<br>결제는 정식 출시 때 열려요. 지금은 '프로 시작'을 누르면 테스트로 바로 켜져요.</p>
     <div class="row"><button type="button" class="btn btn--line" data-act="close">닫기</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="trial-on">써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button></div>`);return}
+  const hc=active(),hd=hc?headlineFor(hc.age):['',''],hh=(hc&&customHL(hc))||['',''];
   modal(`<span class="pro-tag" style="align-self:flex-start">${TRIAL?'BODYLOG PRO 써보는 중':'BODYLOG PRO 사용 중'}</span><h3>우리 상호 알리기</h3>${TRIAL?'<p style="margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)">써보기에서는 사진 저장이 안 돼요. 마음에 들면 <b style="color:var(--ink)">프로 시작</b>을 눌러주세요.</p>':''}
     <form id="wmForm" style="display:flex;flex-direction:column;gap:12px">
     <label class="form-field">상호 이름 <small style="color:var(--muted);font-weight:500">(공유 이미지 맨 위·워터마크에 표시)</small><input id="f-wm" maxlength="20" value="${esc(S.wmText||'')}" placeholder="${esc(S.club||'예: 피다다이어트')}"></label>
     <label class="form-field">코치 이름 <small style="color:var(--muted);font-weight:500">(고객 이름 옆 '담당 OOO'에 표시)</small><input id="f-wmcoach" maxlength="20" value="${esc(S.coach||'')}" placeholder="예: 한효정코치"></label>
+    ${hc?`<div class="form-field" style="gap:8px">카드 문구 <small style="color:var(--muted);font-weight:500">(공유 이미지 큰 제목 · ${esc(hc.name)} 님 · 비우면 나이대별 자동)</small><input id="f-hl1" maxlength="18" value="${esc(hh[0])}" placeholder="${esc(hd[0])}" aria-label="카드 문구 첫째 줄"><input id="f-hl2" maxlength="18" value="${esc(hh[1])}" placeholder="${esc(hd[1])}" aria-label="카드 문구 둘째 줄"></div>`:''}
     <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="f-wmoff" ${S.wmOff?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">워터마크 없애기</label>
     <div class="row">${TRIAL?'<button type="button" class="btn btn--line" data-act="trial-off">그만 써보기</button><button type="button" class="btn btn--primary" data-act="pro-on">프로 시작</button>':'<button type="button" class="btn btn--line" data-act="pro-off">무료로 돌아가기</button>'}<span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">${TRIAL?'넣고 보기':'저장'}</button></div></form>`,sh=>{
-    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;markDirty();closeModal();renderAll();
+    sh.querySelector('#wmForm').addEventListener('submit',e=>{e.preventDefault();S.wmText=sh.querySelector('#f-wm').value.trim();S.coach=sh.querySelector('#f-wmcoach').value.trim()||S.coach;S.wmOff=sh.querySelector('#f-wmoff').checked;if(hc&&sh.querySelector('#f-hl1')){const v=[sh.querySelector('#f-hl1').value.trim(),sh.querySelector('#f-hl2').value.trim()],hv=v[0]||v[1]?v:null;if(TRIAL)TRIAL_HL[hc.id]=hv;else{hc.headline=hv;hc.updatedAt=Date.now()}}markDirty();closeModal();renderAll();
       if(TRIAL){if(active())exportCard();else toast('고객을 열면 상호와 코치 이름이 들어간 사진을 볼 수 있어요')}else toast('저장했습니다')})});
-}
-function headlineSheet(){
-  const c=active();if(!c)return;const d=headlineFor(c.age),h=customHL(c)||['',''];
-  modal(`<span class="pro-tag" style="align-self:flex-start">${TRIAL?'BODYLOG PRO 써보는 중':'BODYLOG PRO'}</span><h3>카드 문구 직접 쓰기</h3>
-    <p style="margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)">공유 이미지 맨 위 큰 제목이에요. 비워두면 나이대별 자동 문구가 들어가요.${TRIAL?'<br>써보기에서 쓴 문구는 저장되지 않아요.':''}</p>
-    <form id="hlForm" style="display:flex;flex-direction:column;gap:12px">
-    <label class="form-field">첫째 줄 <small style="color:var(--muted);font-weight:500">(흰 글씨, 앞에 'N일,'이 붙어요)</small><input id="f-hl1" maxlength="18" value="${esc(h[0])}" placeholder="${esc(d[0])}"></label>
-    <label class="form-field">둘째 줄 <small style="color:var(--muted);font-weight:500">(민트 글씨)</small><input id="f-hl2" maxlength="18" value="${esc(h[1])}" placeholder="${esc(d[1])}"></label>
-    <div class="row"><button type="button" class="btn btn--line" id="hlAuto">자동 문구로</button><span class="grow"></span><button type="button" class="btn btn--line" data-act="close">취소</button><button type="submit" class="btn btn--primary">${TRIAL?'넣고 보기':'저장'}</button></div></form>`,sh=>{
-    const put=v=>{if(TRIAL)TRIAL_HL[c.id]=v;else{c.headline=v;touch(c)}closeModal();renderMain()};
-    sh.querySelector('#hlAuto').addEventListener('click',()=>{put(null);toast('나이대별 자동 문구로 바꿨어요')});
-    sh.querySelector('#hlForm').addEventListener('submit',e=>{e.preventDefault();const v=[sh.querySelector('#f-hl1').value.trim(),sh.querySelector('#f-hl2').value.trim()];put(v[0]||v[1]?v:null);
-      if(TRIAL)exportCard();else toast('카드 문구를 바꿨어요')})});
 }
 function coachForm(){
   modal(`<h3>코치 정보</h3><form id="coachForm" style="display:flex;flex-direction:column;gap:12px"><label class="form-field">코치 이름 (공유 이미지에 표시)<input id="f-coach" maxlength="20" value="${esc(S.coach)}"></label>
@@ -1870,7 +1857,6 @@ document.addEventListener('click',async e=>{
     case 'bc-input':bcForm(c);break;
     case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
-    case 'headline':if(!isPro()){premiumSheet();toast('카드 문구 직접 쓰기는 프로 기능이에요');break}headlineSheet();break;
     case 'pro-on':S.plan='premium';TRIAL=false;trialBar();markDirty();premiumSheet();renderMain();toast('프로를 시작했어요 (테스트)');break;
     case 'trial-on':TRIAL=true;trialBar();renderMain();premiumSheet();break; // 써보기: first the 상호·코치 이름 form, then the card
     case 'trial-off':TRIAL=false;TRIAL_HL={};stripTrialErase();trialBar();markDirty();closeModal();renderMain();toast('써보기를 끝냈어요');break;
