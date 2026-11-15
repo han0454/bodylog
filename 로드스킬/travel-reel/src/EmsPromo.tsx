@@ -89,6 +89,29 @@ const EndCardText = () => {
         <br />
         <span style={{ color: "#D8FF3C" }}>투자하세요.</span>
       </div>
+      <div
+        style={{
+          marginTop: 64,
+          paddingTop: 28,
+          borderTop: "2px solid rgba(255, 255, 255, 0.5)",
+          fontFamily: promoFont,
+          fontWeight: 700,
+          fontSize: 60,
+          letterSpacing: "0.04em",
+          color: "#FFFFFF",
+          opacity: interpolate(frame, [0.5 * fps, 1 * fps], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          }),
+          translate: interpolate(frame, [0.5 * fps, 1.1 * fps], ["0px 24px", "0px 0px"], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+            easing: Easing.bezier(0.16, 1, 0.3, 1),
+          }),
+        }}
+      >
+        피다다이어트
+      </div>
     </AbsoluteFill>
   );
 };
