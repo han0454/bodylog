@@ -45,10 +45,8 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .topbar .brand>div{min-width:0}.topbar .brand b,.topbar .brand small,.save-state,.coach{white-space:nowrap}.topbar .brand small{overflow:hidden;text-overflow:ellipsis}
 .coach #coachName{max-width:6.5em;overflow:hidden;text-overflow:ellipsis}.coach,.save-state{flex:none}
 @media (max-width:480px){.topbar .brand small{display:none}.save-state #saveText{display:none}}
-.brand__mark{width:30px;height:30px;border-radius:9px;background:var(--ink);display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:3px;padding:7px 7px 7px}
-.brand__mark i{display:block;border-radius:2px}
-.brand__mark i:first-child{height:15px;background:var(--before)}
-.brand__mark i:last-child{height:10px;background:var(--stage-accent)}
+.brand__mark{width:30px;height:30px;border-radius:9px;background:#15191C url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%237E8995' stroke-width='7.5' stroke-linejoin='round'><circle cx='36' cy='23.5' r='9.2'/><path d='M36 36C20.8 36 17.8 47.8 17 63L14.4 75.9Q16.5 79.2 20.8 79.2L51.1 79.2Q55.4 79.2 57.6 75.9L55 63C54.1 47.8 51.1 36 36 36Z'/></g><g fill='%2315191C' stroke='%2335C8AF' stroke-width='7.5' stroke-linejoin='round'><circle cx='65.1' cy='23.5' r='9.2'/><path d='M65.1 36C56 36 54.2 47.8 53.7 63L52.2 75.9Q54.3 79.2 58.6 79.2L71.6 79.2Q75.9 79.2 78.1 75.9L76.5 63C76 47.8 74.2 36 65.1 36Z'/></g><path d='M44.6 57.6H56.5M52.2 53.2L57 57.6L52.2 61.9' stroke='%2335C8AF' stroke-width='6.0' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/100% no-repeat;display:block;flex:none}
+.brand__mark i{display:none}
 .brand b{font-family:var(--font-num);font-weight:700;letter-spacing:.06em;font-size:15px}
 .brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.02em;margin-top:-3px}
 .save-state{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
@@ -258,8 +256,8 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .splash.is-out{opacity:0;visibility:hidden}
 .splash__glow{position:absolute;width:140vmax;height:140vmax;left:50%;top:46%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(53,200,175,.22),rgba(53,200,175,0) 70%);pointer-events:none}
 .splash__mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;position:relative;animation:splashIn .8s cubic-bezier(.2,.8,.2,1) both}
-.splash__mark{width:96px;height:96px;border-radius:26px;background:#1E2428;box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);position:relative}
-.splash__mark i{position:absolute;bottom:26px;width:20px;border-radius:6px}
+.splash__mark{width:96px;height:96px;border-radius:26px;background:#15191C url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%237E8995' stroke-width='5' stroke-linejoin='round'><circle cx='36' cy='23.5' r='9.2'/><path d='M36 36C20.8 36 17.8 47.8 17 63L14.4 75.9Q16.5 79.2 20.8 79.2L51.1 79.2Q55.4 79.2 57.6 75.9L55 63C54.1 47.8 51.1 36 36 36Z'/></g><g fill='%2315191C' stroke='%2335C8AF' stroke-width='5' stroke-linejoin='round'><circle cx='65.1' cy='23.5' r='9.2'/><path d='M65.1 36C56 36 54.2 47.8 53.7 63L52.2 75.9Q54.3 79.2 58.6 79.2L71.6 79.2Q75.9 79.2 78.1 75.9L76.5 63C76 47.8 74.2 36 65.1 36Z'/></g><path d='M44.6 57.6H56.5M52.2 53.2L57 57.6L52.2 61.9' stroke='%2335C8AF' stroke-width='4.0' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/100% no-repeat;box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);position:relative}
+.splash__mark i{display:none}
 .splash__mark i:first-child{left:24px;height:44px;background:#7E8995}
 .splash__mark i:last-child{left:52px;height:28px;background:#35C8AF;animation:splashGrow 1.2s .3s cubic-bezier(.2,.8,.2,1) both}
 .splash__word{font:700 40px/1 Sora,var(--font-num);letter-spacing:.06em}
@@ -1073,6 +1071,11 @@ let pvTimer;function drawPreviewSoon(){clearTimeout(pvTimer);pvTimer=setTimeout(
 
 /* ---------- share image ---------- */
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+// BODYLOG mark (two outlined people: before gray, after same height but slimmer mint, arrow between). 100x100 box at X,Y size s
+const LOGO_P={L:new Path2D('M36 36C20.8 36 17.8 47.8 17 63L14.4 75.9Q16.5 79.2 20.8 79.2L51.1 79.2Q55.4 79.2 57.6 75.9L55 63C54.1 47.8 51.1 36 36 36Z'),R:new Path2D('M65.1 36C56 36 54.2 47.8 53.7 63L52.2 75.9Q54.3 79.2 58.6 79.2L71.6 79.2Q75.9 79.2 78.1 75.9L76.5 63C76 47.8 74.2 36 65.1 36Z'),A:new Path2D('M44.6 57.6H56.5M52.2 53.2L57 57.6L52.2 61.9')};
+function drawMark(x,X,Y,s,bg,sw=6.5){x.save();x.translate(X,Y);x.scale(s/100,s/100);x.fillStyle=bg;rr(x,0,0,100,100,24);x.fill();x.lineJoin='round';x.lineCap='round';x.lineWidth=sw;
+  x.strokeStyle='#7E8995';x.beginPath();x.arc(36,23.5,9.2,0,7);x.stroke();x.stroke(LOGO_P.L);
+  x.fillStyle=bg;x.strokeStyle='#35C8AF';x.fill(LOGO_P.R);x.stroke(LOGO_P.R);x.beginPath();x.arc(65.1,23.5,9.2,0,7);x.fill();x.stroke();x.lineWidth=sw*.8;x.stroke(LOGO_P.A);x.restore()}
 // BODYLOG logo watermark, bottom-right inside each photo (right edge rx, bottom edge by)
 let TRIAL=false; // 프로 써보기: Pro look on screen, but nothing can be saved (not stored, ends on reload)
 const isPaid=()=>S.plan==='premium';
@@ -1097,8 +1100,7 @@ function watermark(x,rx,by,k=1){
   x.save();x.font=`700 ${Math.round(22*k)}px Sora, sans-serif`;
   const tw=x.measureText('BODYLOG').width,mk2=Math.round(30*k),pad=Math.round(10*k),w=pad+mk2+Math.round(8*k)+tw+pad+4,h=mk2+pad*2-4,X=rx-w,Y=by-h;
   x.globalAlpha=.78;x.fillStyle='rgba(12,14,16,.55)';rr(x,X,Y,w,h,h/2);x.fill();
-  const mx=X+pad,my=Y+(h-mk2)/2;x.fillStyle='#2A3136';rr(x,mx,my,mk2,mk2,mk2*.26);x.fill();
-  x.fillStyle='#7E8995';rr(x,mx+mk2*.24,my+mk2*.28,mk2*.2,mk2*.5,2);x.fill();x.fillStyle='#35C8AF';rr(x,mx+mk2*.54,my+mk2*.46,mk2*.2,mk2*.32,2);x.fill();
+  const mx=X+pad,my=Y+(h-mk2)/2;x.globalAlpha=1;drawMark(x,mx,my,mk2,'#15191C',7.5);x.globalAlpha=.78;
   x.fillStyle='#fff';x.textBaseline='middle';x.fillText('BODYLOG',mx+mk2+Math.round(8*k),Y+h/2+1);x.restore();
 }
 let pvCanvas=null;
@@ -1112,7 +1114,7 @@ function renderCard(scale=1){
   let y=tall?150:84;
   x.textBaseline='alphabetic';
   // brand
-  x.fillStyle='#2A3136';rr(x,M,y-38,46,46,12);x.fill();x.fillStyle='#7E8995';rr(x,M+11,y-27+6,10,24,3);x.fill();x.fillStyle=acc;rr(x,M+25,y-27+14,10,16,3);x.fill();
+  drawMark(x,M,y-38,46,'#2A3136',7);
   x.fillStyle=ink;x.font='700 26px Sora, sans-serif';x.fillText('BODYLOG',M+62,y-6);
   const days=(c.before.date&&c.after.date)?Math.round((new Date(c.after.date)-new Date(c.before.date))/864e5):0;
   x.font='600 28px "IBM Plex Sans KR", sans-serif';
