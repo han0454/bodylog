@@ -199,7 +199,6 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .bc-head{display:grid;grid-template-columns:52px minmax(0,1fr) 12px minmax(0,1fr) 54px;gap:6px;padding:0 10px;font:700 11px var(--font-num);letter-spacing:.1em;color:#9FB8DE}
 .bc-head span:nth-child(2),.bc-head span:nth-child(4){text-align:center}.bc-head span:last-child{text-align:right}
 .bc-type{display:flex;gap:8px;margin:0 0 14px}.bc-type span{flex:1;text-align:center;background:rgba(0,0,0,.2);border-radius:12px;padding:8px 6px;font-size:12px;color:#BFD3F2}.bc-type b{display:block;font-size:16px;margin-top:2px}
-.bc-ob{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:0 0 14px}.bc-ob span{background:rgba(0,0,0,.2);border-radius:12px;padding:7px 10px;font-size:13px;color:#BFD3F2}.bc-ob small{display:block;font-size:11px}.bc-ob b{font-family:Sora,sans-serif;font-size:15px}
 .bc-card .lseg{background:rgba(255,255,255,.08);border-color:transparent}.bc-card .lseg button{color:#BFD3F2}.bc-card .lseg button small{color:#7F97BF}.bc-card .lseg button.is-on{background:#fff;color:#0A2552}.bc-card .lseg button.is-on small{color:#4D6A99}
 .bc-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .bc-card .btn--line{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
@@ -1295,15 +1294,8 @@ function bcVals(r){const f=bcNum(r.fatKg);if(isNaN(f))return null;const v={fat:f
   for(const [k] of BCM){const n=parseFloat(r[k]);if(!(n>0))return null;v[k]=n}return v}
 function bcMissing(c){const miss=[];if(!(parseFloat(c.height)>100))miss.push('키');sides.forEach(([k,L])=>{const r=c[k],m=[];if(isNaN(bcFatPct(r)))m.push(parseFloat(r.weight)>0?'체지방':'체중, 체지방');BCM.forEach(([f,lab])=>{if(!(parseFloat(r[f])>0))m.push(lab)});if(m.length)miss.push(`${L}: ${m.join(', ')}`)});return miss}
 function bcType(v){const s=k=>bcSt(k,v[k]);if(s('fat')==='high')return s('protein')==='low'?'근육 부족 비만형':'비만형';if(s('fat')==='low')return '마른형';if(s('protein')==='low')return '근육 부족형';return '표준형'}
-// 비만 판정 (BMI, 체지방률, 내장지방레벨) + 건강나이 — optional extras, never required to draw the picture
-const bcBMI=(r,h)=>{const w=parseFloat(r.weight),m=parseFloat(h)/100;return w>0&&m>1?Math.round(w/(m*m)*10)/10:NaN};
 const bcNum=v=>{const n=parseFloat(v);return n>0?n:NaN};
-const OB_COL={low:'#6CC6FF',ok:'#4FE3C1',high:'#FF3B3B'},OB_TXT={low:'이하',ok:'표준',high:'이상'};
 // [name, unit, standard low, standard high, value of a record]; 내장지방 표준 = 레벨 1~9
-const bcObItems=d=>[['BMI','',18.5,23,r=>bcBMI(r,d.height)],['체지방률','%',BC_STD.fatPct[0],BC_STD.fatPct[1],r=>bcFatPct(r)],['내장지방레벨','',1,9,r=>bcNum(r.visceral)],['내장지방면적','cm²',40,80,r=>bcNum(r.vfa)]]
-  // BMI·체지방률 always; the two 내장지방 bars only when that number was entered (InBody gives a level, ACCUNIQ both)
-  .filter(([nm,,,,get],i)=>i<2||!isNaN(get(d.before))||!isNaN(get(d.after)));
-const obSt=(v,lo,hi)=>v<lo?'low':v>hi?'high':'ok';
 const bcFac=(k,v)=>{const [lo,hi]=BC_STD[k];if(v<lo)return Math.max(.62,1-(lo-v)/lo*2.2);if(v>hi)return Math.min(1.6,1+(v-hi)/hi*1.6);return 1};
 function bcParts(f){
   const P=[];
@@ -1385,9 +1377,9 @@ function renderBC(d,ratio,scale=1){
     x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillStyle='#9BE22E';x.font=`700 30px ${F}`;const uw=x.measureText('일째').width;x.fillText('일째',W-50,h2y+8);
     x.font=`700 ${tall?96:84}px Sora, sans-serif`;x.fillText(String(days),W-58-uw,h2y+8);x.textAlign='left'}
   const iy=h2y+(tall?54:46);
-  x.fillStyle='#BFD3F2';x.font=`500 26px ${F}`;x.fillText(`${S.showName?d.name:maskName(d.name)} 님 · ${d.age?d.age+'세 · ':''}${sexLabel(d.sex)} · 담당 ${isPro()?(S.coach||'핏코치'):'핏코치'} · 체성분 비교`,50,iy);
+  x.fillStyle='#BFD3F2';x.font=`500 26px ${F}`;x.fillText(`${S.showName?d.name:maskName(d.name)} 님 · ${d.age?d.age+'세 · ':''}${sexLabel(d.sex)} · 담당 ${isPro()?(S.coach||'핏코치'):'핏코치'}`,50,iy);
   // two panels: half standard / half measured figure
-  const sc=tall?.84:.55,k=tall?1:.82,oy=iy+(tall?128:110),pTop=oy-90,bodyH=720*sc,typeH=tall?130:64,pH=90+20+bodyH+50+typeH+(tall?34:22);
+  const sc=tall?.92:.64,k=tall?1:.82,oy=iy+(tall?128:110),pTop=oy-90,bodyH=720*sc,typeH=tall?130:64,pH=90+20+bodyH+50+typeH+(tall?34:22);
   const LY={mineral:60,protein:180,fat:335,water:560};
   const panel=(label,date,v,px,pw)=>{const cx=px+pw/2,isB=label==='BEFORE';
     x.fillStyle='rgba(255,255,255,.07)';rr(x,px,pTop,pw,pH,22);x.fill();
@@ -1417,30 +1409,7 @@ function renderBC(d,ratio,scale=1){
   panel('BEFORE',d.before.date,vb,40,490);panel('AFTER',d.after.date,va,550,490);
   const am=oy+20+300*sc;x.fillStyle='#9BE22E';x.beginPath();x.moveTo(530,am-20);x.lineTo(556,am);x.lineTo(530,am+20);x.closePath();x.fill();
   // bar graph: within standard = green, only the part over the standard top turns red, a shortage shows as a dashed box
-  // 비만 판정: BMI · 체지방률 · 내장지방, each a 이하/표준/이상 bar with BEFORE (hollow) and AFTER (filled) marks
-  const oyS=pTop+pH+(tall?20:14),oh=tall?178:146;x.fillStyle='rgba(255,255,255,.07)';rr(x,40,oyS,1000,oh,22);x.fill();
-  x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?26:23}px ${F}`;x.fillText('비만 판정',68,oyS+(tall?44:38));
-  x.font=`600 ${tall?18:16}px ${F}`;x.fillStyle='#BFD3F2';x.textAlign='right';x.fillText('○ 비포   ● 애프터   ·   하늘 = 이하  ·  민트 = 표준  ·  빨강 = 이상',1012,oyS+(tall?44:38));
-  const OBI=bcObItems(d);OBI.forEach(([nm,u,lo,hi,get],i)=>{const lv=nm==='내장지방레벨',int=nm.startsWith('내장지방'),cw=1000/OBI.length,c0=40+cw*i,bx=c0+28,bw=cw-56,by=oyS+(tall?96:80),bh=tall?16:14;
-    const b=get(d.before),a=get(d.after),z0=lv?0:int?0:lo*.75,z1=hi*1.5;
-    // zones: 이하 | 표준 | 이상 laid out evenly so the standard band is always readable
-    const zw=[lv?.12:.28,.4],seg=[[0,zw[0],OB_COL.low],[zw[0],zw[0]+zw[1],OB_COL.ok],[zw[0]+zw[1],1,OB_COL.high]];
-    const pos=v=>{if(isNaN(v))return null;let t;if(v<lo)t=zw[0]*Math.max(0,(v-z0)/(lo-z0));else if(v<=hi)t=zw[0]+zw[1]*(v-lo)/(hi-lo);else t=zw[0]+zw[1]+(1-zw[0]-zw[1])*Math.min(1,(v-hi)/(z1-hi));return bx+Math.max(.02,Math.min(.98,t))*bw};
-    seg.forEach(([s0,s1,c])=>{x.globalAlpha=.35;x.fillStyle=c;x.fillRect(bx+s0*bw,by,(s1-s0)*bw,bh);x.globalAlpha=1});
-    x.fillStyle='#BFD3F2';x.font=`600 ${tall?15:14}px Sora, ${F}`;x.textAlign='center';const fmt=n=>int?String(Math.round(n)):n.toFixed(1);
-    if(!lv)x.fillText(fmt(lo),bx+zw[0]*bw,by+bh+(tall?20:18));x.fillText(fmt(hi),bx+(zw[0]+zw[1])*bw,by+bh+(tall?20:18));
-    x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?22:20}px ${F}`;x.fillText(nm,bx,by-(tall?16:12));
-    x.font=`500 ${tall?15:14}px ${F}`;x.fillStyle='#7F97BF';if(OBI.length<4)x.fillText(`표준 ${lv?'1~9':fmt(lo)+'~'+fmt(hi)+u}`,bx+x.measureText(nm).width*1.5+14,by-(tall?16:12));
-    const pb=pos(b),pa=pos(a),my=by+bh/2;
-    if(pb!=null){x.lineWidth=4;x.strokeStyle='#fff';x.fillStyle='#0F3366';x.beginPath();x.arc(pb,my,tall?11:10,0,7);x.fill();x.stroke()}
-    if(pa!=null){x.fillStyle=OB_COL[obSt(a,lo,hi)];x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.arc(pa,my,tall?12:11,0,7);x.fill();x.stroke()}
-    // values: 36.2 → 25.5 (colour = zone)
-    const vy=by+bh+(tall?54:46);x.textAlign='center';const cx2=bx+bw/2;
-    if(isNaN(b)&&isNaN(a)){x.font=`600 ${tall?18:16}px ${F}`;x.fillStyle='#7F97BF';x.fillText('결과지 숫자 넣으면 표시',cx2,vy);return}
-    const tb=isNaN(b)?'–':fmt(b),ta=isNaN(a)?'–':fmt(a),ar='  →  ';x.font=`700 ${tall?24:21}px Sora, sans-serif`;
-    const wb=x.measureText(tb).width,wa=x.measureText(ta).width,wr=x.measureText(ar).width;let sx=cx2-(wb+wr+wa)/2;x.textAlign='left';
-    x.fillStyle=isNaN(b)?'#7F97BF':OB_COL[obSt(b,lo,hi)];x.fillText(tb,sx,vy);x.fillStyle='#BFD3F2';x.fillText(ar,sx+wb,vy);x.fillStyle=isNaN(a)?'#7F97BF':OB_COL[obSt(a,lo,hi)];x.fillText(ta,sx+wb+wr,vy)});
-  const gx=40,gy=oyS+oh+(tall?20:14),gw=1000,gh=H-(tall?62:46)-gy;
+  const gx=40,gy=pTop+pH+(tall?24:18),gw=1000,gh=H-(tall?62:46)-gy;
   x.fillStyle='rgba(255,255,255,.07)';rr(x,gx,gy,gw,gh,22);x.fill();
   x.textAlign='left';x.fillStyle='#fff';x.font=`700 ${tall?26:23}px ${F}`;x.fillText('체성분 변화 그래프',gx+28,gy+(tall?48:40));
   x.font=`600 ${tall?19:17}px ${F}`;x.fillStyle='#BFD3F2';x.fillText('하늘 = 부족  ·  주황 = 낮음  ·  민트 = 기준  ·  초록 = 충분  ·  빨강 = 과다',gx+28,gy+(tall?80:68));
@@ -1491,8 +1460,6 @@ function bcCardHTML(c){
         <div class="bc-head"><span></span><span>BEFORE</span><span></span><span>AFTER</span><span>변화</span></div>
         <div class="bc-sum">${rows}</div>
         ${vb&&va?`<div class="bc-type"><span>BEFORE 체형<b style="color:${bcType(vb)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(vb)}</b></span><span>AFTER 체형<b style="color:${bcType(va)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(va)}</b></span></div>`:''}
-        ${(()=>{const L=bcObItems(c).map(([nm,u,lo,hi,get])=>[nm,get(c.before),get(c.after),lo,hi]).concat([['건강나이',bcNum(c.before.hage),bcNum(c.after.hage)]]).filter(([,b,a])=>!isNaN(b)||!isNaN(a));
-          return L.length?`<div class="bc-ob">${L.map(([nm,b,a,lo,hi])=>{const f=v=>isNaN(v)?'–':nm.startsWith('내장지방')||nm==='건강나이'?String(Math.round(v)):v.toFixed(1),col=v=>isNaN(v)||lo==null?'#FFE89A':OB_COL[obSt(v,lo,hi)];return `<span><small>${nm}</small><b style="color:${col(b)}">${f(b)}</b> → <b style="color:${col(a)}">${f(a)}</b></span>`}).join('')}</div>`:''})()}
         <div class="lseg" role="group" aria-label="체성분 그림 사이즈">
           <button type="button" data-act="bc-ratio" data-v="916" class="${S.bcRatio!=='34'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
           <button type="button" data-act="bc-ratio" data-v="34" class="${S.bcRatio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
@@ -1509,9 +1476,9 @@ function bcCardHTML(c){
 // one sheet to type the InBody numbers for BEFORE and AFTER
 function bcForm(c){
   // same order as the InBody/ACCUNIQ sheet; 체지방 is entered in kg and 체지방률 % is worked out from 체중
-  const F=[['weight','체중','kg'],['water','체수분','L'],['protein','단백질','kg'],['mineral','무기질','kg'],['fatKg','체지방','kg'],['visceral','내장지방레벨',''],['vfa','내장지방면적','cm²'],['hage','건강나이','세·신체연령']];
+  const F=[['weight','체중','kg'],['water','체수분','L'],['protein','단백질','kg'],['mineral','무기질','kg'],['fatKg','체지방','kg'],['hage','건강나이','세·신체연령']];
   const kgOf=r=>r.fatKg||'';
-  modal(`<h3>인바디 숫자 넣기</h3><p style="margin:-6px 0 0;color:var(--muted);font-size:13px">인바디 결과지 <b>체성분분석</b> 칸의 숫자를 그대로 넣어주세요. 체지방률(%)은 체지방(kg) ÷ 체중으로 자동 계산돼요. <b>내장지방레벨·면적, 건강나이(신체연령)</b>는 결과지에 없으면 비워도 돼요.</p>
+  modal(`<h3>인바디 숫자 넣기</h3><p style="margin:-6px 0 0;color:var(--muted);font-size:13px">인바디 결과지 <b>체성분분석</b> 칸의 숫자를 그대로 넣어주세요. 체지방률(%)은 체지방(kg) ÷ 체중으로 자동 계산돼요. <b>건강나이(신체연령)</b>는 결과지에 없으면 비워도 돼요.</p>
     <label class="form-field">키 <small style="font-weight:500">(인바디 표준 범위를 키로 계산해요)</small><span class="field" style="max-width:160px"><input id="bcHeight" inputmode="decimal" value="${esc(c.height||'')}" placeholder="예: 160"><small>cm</small></span></label>
     <div class="mwrap"><table class="mtable bcform"><colgroup><col class="c1"><col><col></colgroup><thead><tr><th></th><th>BEFORE</th><th style="text-align:left">AFTER</th></tr></thead><tbody>
     ${F.map(([f,l,u])=>`<tr><td>${l}<small>${u}</small></td>${sides.map(([k])=>`<td><label class="field"><input inputmode="decimal" data-bcf="${f}" data-side="${k}" value="${esc(f==='fatKg'?kgOf(c[k]):(c[k][f]||''))}" placeholder="${f==='hage'?'예: 45':'0.0'}" aria-label="${k} ${l}"><small>${u}</small></label></td>`).join('')}</tr>`).join('')}
