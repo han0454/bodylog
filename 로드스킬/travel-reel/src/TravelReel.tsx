@@ -1,7 +1,7 @@
-import { Video } from "@remotion/media";
+import { Audio, Video } from "@remotion/media";
 import { TransitionSeries, springTiming } from "@remotion/transitions";
 import { slide } from "@remotion/transitions/slide";
-import { AbsoluteFill, staticFile, useVideoConfig } from "remotion";
+import { AbsoluteFill, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Caption } from "./Caption";
 import { EndCard } from "./EndCard";
 
@@ -14,6 +14,26 @@ const TopScrim = () => (
     }}
   />
 );
+
+// Original synthesized bed (109 BPM: the first cut lands on a downbeat).
+// Sits under the voices and fades out with the closing card.
+const Music = () => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  return (
+    <Audio
+      name="Background music"
+      src={staticFile("music.m4a")}
+      volume={interpolate(
+        frame,
+        [0, 0.6 * fps, durationInFrames - 1.2 * fps, durationInFrames],
+        [0, 0.32, 0.32, 0],
+        { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+      )}
+    />
+  );
+};
 
 export const TravelReel = () => {
   const { fps } = useVideoConfig();
@@ -62,6 +82,7 @@ export const TravelReel = () => {
           </EndCard>
         </TransitionSeries.Sequence>
       </TransitionSeries>
+      <Music />
     </AbsoluteFill>
   );
 };
