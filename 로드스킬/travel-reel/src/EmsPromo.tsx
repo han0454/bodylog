@@ -85,9 +85,9 @@ const EndCardText = () => {
           }),
         }}
       >
-        지금,
+        20분,
         <br />
-        <span style={{ color: "#D8FF3C" }}>체험해 보세요.</span>
+        <span style={{ color: "#D8FF3C" }}>투자하세요.</span>
       </div>
     </AbsoluteFill>
   );
@@ -114,13 +114,13 @@ export const EmsPromo = () => {
         <Sequence name="Shot 3: adjust" from={9 * fps} durationInFrames={4.5 * fps}>
           <Shot trimBefore={34 * fps} origin="40% 55%" />
           <PromoCaption name="Caption 3" from={0.2 * fps} durationInFrames={4.2 * fps}>
-            내 몸에 맞춰 강도를 조절해요
+            임팩트 있는 근력운동 코스
           </PromoCaption>
         </Sequence>
         <Sequence name="Shot 4: routine" from={13.5 * fps} durationInFrames={3.5 * fps}>
           <Shot trimBefore={47 * fps} origin="50% 50%" />
           <PromoCaption name="Caption 4" from={0.2 * fps} durationInFrames={3.2 * fps}>
-            바쁜 하루, 나를 위한 시간
+            체온을 올려주는 코스까지
           </PromoCaption>
         </Sequence>
         <Sequence name="End card" from={17 * fps} durationInFrames={3 * fps}>
