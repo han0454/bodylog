@@ -363,7 +363,7 @@ body.locked{overflow:hidden}
 .tools-row .ti{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--surface-2)}
 .tools-row .ti .i{width:22px;height:22px}
 .tools-row .ti--ba{background:#111416;color:#35C8AF}.tools-row .ti--bc{background:#12458F;color:#9BE22E}.tools-row .ti--add{background:var(--accent);color:var(--accent-ink)}
-.home__note{margin:0;font-size:13px;color:var(--muted);line-height:1.5;text-align:center;padding:0 8px}
+.home__note{margin:0;font-size:13px;color:var(--muted);line-height:1.5;text-align:center;padding:0 8px;word-break:keep-all}
 /* section tabs: each feature is its own room (add a feature = add an entry in SECTIONS) */
 .secbar{display:flex;gap:6px;padding:5px;background:var(--surface);border:1px solid var(--line);border-radius:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:15;box-shadow:0 4px 14px rgba(10,20,30,.06)}
 .secbar button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border-radius:12px;font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap;min-width:0}
@@ -980,7 +980,7 @@ function homeHTML(){
       <button type="button" data-act="clients"><span class="ti">${ic('users')}</span>고객 목록</button>
       <button type="button" data-act="add-client"><span class="ti ti--add">${ic('plus')}</span>새 고객 등록</button>
     </div>
-    <p class="home__note">${has?'저장한 고객은 <b>고객 목록</b>에서 이름이나 전화번호로 다시 불러올 수 있어요.':'고객을 등록하면 사진과 체성분 기록이 고객 파일에 쌓여요.'}</p>
+    <p class="home__note">${has?'저장한 고객은 <b>고객 목록</b>에서<br>이름이나 전화번호로 다시 불러올 수 있어요.':'고객을 등록하면 사진과 체성분 기록이<br>고객 파일에 쌓여요.'}</p>
   </section>`;
 }
 function homeArt(){
