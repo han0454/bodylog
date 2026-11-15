@@ -25,7 +25,7 @@ const SourceMusic = () => {
       volume={interpolate(
         frame,
         [0, durationInFrames - 1.5 * fps, durationInFrames],
-        [0.9, 0.9, 0],
+        [0.22, 0.22, 0],
         { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
       )}
     />
@@ -98,40 +98,39 @@ export const EmsPromo = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#100C1C" }}>
+      {/* Cuts follow the voiceover: each line starts just after its shot. */}
       <Track name="Shots">
-        <Sequence name="Shot 1: intro" durationInFrames={4.5 * fps}>
+        <Sequence name="Shot 1: intro" durationInFrames={3.6 * fps}>
           <Shot trimBefore={0} origin="50% 40%" />
-          <PromoCaption name="Caption 1" from={0.6 * fps} durationInFrames={3.8 * fps}>
+          <PromoCaption name="Caption 1" from={0.15 * fps} durationInFrames={3.3 * fps}>
             운동할 시간, 없으시죠?
           </PromoCaption>
         </Sequence>
-        <Sequence name="Shot 2: bed" from={4.5 * fps} durationInFrames={4.5 * fps}>
+        <Sequence name="Shot 2: bed" from={3.6 * fps} durationInFrames={5.6 * fps}>
           <Shot trimBefore={10 * fps} origin="75% 60%" />
-          <PromoCaption name="Caption 2" from={0.2 * fps} durationInFrames={4.2 * fps}>
+          <PromoCaption name="Caption 2" from={0.15 * fps} durationInFrames={5.3 * fps}>
             누워만 있어도 전신 근육을 깨우는 EMS
           </PromoCaption>
         </Sequence>
-        <Sequence name="Shot 3: adjust" from={9 * fps} durationInFrames={4.5 * fps}>
+        <Sequence name="Shot 3: adjust" from={9.2 * fps} durationInFrames={2.9 * fps}>
           <Shot trimBefore={34 * fps} origin="40% 55%" />
-          <PromoCaption name="Caption 3" from={0.2 * fps} durationInFrames={4.2 * fps}>
+          <PromoCaption name="Caption 3" from={0.15 * fps} durationInFrames={2.6 * fps}>
             임팩트 있는 근력운동 코스
           </PromoCaption>
         </Sequence>
-        <Sequence name="Shot 4: routine" from={13.5 * fps} durationInFrames={3.5 * fps}>
+        <Sequence name="Shot 4: routine" from={12.1 * fps} durationInFrames={3.4 * fps}>
           <Shot trimBefore={47 * fps} origin="50% 50%" />
-          <PromoCaption name="Caption 4" from={0.2 * fps} durationInFrames={3.2 * fps}>
+          <PromoCaption name="Caption 4" from={0.15 * fps} durationInFrames={3.1 * fps}>
             체온을 올려주는 코스까지
           </PromoCaption>
         </Sequence>
-        <Sequence name="End card" from={17 * fps} durationInFrames={3 * fps}>
+        <Sequence name="End card" from={15.5 * fps} durationInFrames={4 * fps}>
           <Shot trimBefore={50.5 * fps} origin="50% 50%" />
           <EndCardText />
         </Sequence>
       </Track>
       <SourceMusic />
-      {/* Voiceover slot: when the recording arrives, add
-          <Audio name="Voiceover" src={staticFile("voice.m4a")} />
-          here and lower "Original music" to ~0.25 so the voice sits on top. */}
+      <Audio name="Voiceover" src={staticFile("voice.m4a")} trimBefore={0.9 * fps} />
     </AbsoluteFill>
   );
 };

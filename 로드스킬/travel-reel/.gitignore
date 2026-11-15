@@ -9,3 +9,4 @@ out
 # Personal footage and renders stay local (repo is served by GitHub Pages)
 public/*.mp4
 out/
+public/voice.*
