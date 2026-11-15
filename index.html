@@ -229,11 +229,24 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .stile.is-on .st{background:rgba(255,255,255,.25);color:#fff}
 .stile--face{--t:#D9822B;--ts:#FBEEDD;--g1:#F2A94A;--g2:#E07A2E}
 .stile--name{--t:#D9475A;--ts:#FBE3E6;--g1:#F07282;--g2:#D9475A}
-.stile--wm{--t:#8A57D6;--ts:#EFE6FB;--g1:#B98AF0;--g2:#8A57D6}
 .stile--nums{--t:#3D5BD6;--ts:#E3E9FB;--g1:#6F8DF0;--g2:#3D5BD6}
 .stile--ratio{--t:var(--ink);--ts:var(--surface-2);--g1:#2A3136;--g2:#13171A;border-color:var(--line);min-height:84px}
 .stile--ratio.is-on{border-color:transparent}
 .stile--ratio.is-on::after{content:"선택";position:absolute;top:11px;right:11px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.25);color:#fff}
+.srows{display:flex;flex-direction:column;gap:10px;margin:0 0 16px}
+.srow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 12px 12px 14px;border-radius:18px;text-align:left;font-weight:700;font-size:15px;line-height:1.25;color:var(--t);background:var(--ts);transition:transform .12s,background .2s}
+.srow:active,.swm:active{transform:scale(.98)}
+.srow .tx{flex:1;min-width:0}.srow small,.swm small{display:block;font-weight:500;font-size:12px;opacity:.8;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .ti{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--surface);color:var(--t);flex:none}
+.srow .ti .i{width:20px;height:20px}
+.srow .tg{flex:none;width:56px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-num);font-size:13px;font-weight:800;letter-spacing:.04em;background:var(--surface);color:var(--muted);border:1.5px solid var(--line)}
+.srow.is-on .tg{background:linear-gradient(140deg,var(--g1),var(--g2));color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.swm{display:flex;align-items:center;gap:12px;width:100%;min-height:96px;padding:16px 18px;border-radius:20px;text-align:left;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(140deg,#B98AF0,#7A45CC)}
+.swm .tx{flex:1;min-width:0}.swm small{font-size:13px;opacity:.9}
+.swm .pr{flex:none;display:flex;flex-direction:column;align-items:center;font-family:var(--font-num);font-size:28px;font-weight:800;letter-spacing:.04em;line-height:1}
+.swm .pr i{font-style:normal;font-size:22px;margin-top:6px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .srow{--ts:var(--surface-2)}}
+:root[data-theme="dark"] .srow{--ts:var(--surface-2)}
 .stile .fr{border:2px solid currentColor;border-radius:4px;opacity:.9}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stile{--ts:var(--surface-2)}}
 :root[data-theme="dark"] .stile{--ts:var(--surface-2)}
@@ -1016,11 +1029,11 @@ function renderMain(){
             <button type="button" data-act="ratio" data-v="916" class="stile stile--ratio ${S.ratio==='916'?'is-on':''}"><span class="fr" style="width:16px;height:28px"></span><span>9:16<small>릴스 · 스토리</small></span></button>
             <button type="button" data-act="ratio" data-v="34" class="stile stile--ratio ${S.ratio==='34'?'is-on':''}"><span class="fr" style="width:21px;height:28px"></span><span>3:4<small>피드 게시물</small></span></button>
           </div>
-          <div class="stiles">
-            <button type="button" class="stile stile--face ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}"><span class="ti">${ic('face')}</span><span class="st">${S.face?'ON':'OFF'}</span><span>얼굴 가림<small>지운 부분 반투명</small></span></button>
-            <button type="button" class="stile stile--name ${S.showName?'is-on':''}" data-act="opt-name" aria-pressed="${S.showName}"><span class="ti">${ic('type')}</span><span class="st">${S.showName?'ON':'OFF'}</span><span>이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가림'}</small></span></button>
-            <button type="button" class="stile stile--wm ${isPro()?'is-on':''}" data-act="premium"><span class="ti">${ic('tag')}</span><span class="st">${isPro()?'PRO':'PRO 🔒'}</span><span>워터마크<small>${isPro()?(S.wmOff?'없음':esc(wmLabel()))+(TRIAL?' · 써보는 중':''):'우리가게 이름 알리기'}</small></span></button>
-            <button type="button" class="stile stile--nums ${S.showNums?'is-on':''}" data-act="opt-nums" aria-pressed="${S.showNums}"><span class="ti">${ic('chart')}</span><span class="st">${S.showNums?'ON':'OFF'}</span><span>수치 표시<small>체중·체지방·근육</small></span></button>
+          <div class="srows">
+            <button type="button" class="srow stile--face ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}"><span class="ti">${ic('face')}</span><span class="tx">얼굴 가림<small>지운 부분을 반투명하게 덮어요</small></span><span class="tg">${S.face?'ON':'OFF'}</span></button>
+            <button type="button" class="srow stile--name ${S.showName?'is-on':''}" data-act="opt-name" aria-pressed="${S.showName}"><span class="ti">${ic('type')}</span><span class="tx">이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가려서 표시'}</small></span><span class="tg">${S.showName?'ON':'OFF'}</span></button>
+            <button type="button" class="srow stile--nums ${S.showNums?'is-on':''}" data-act="opt-nums" aria-pressed="${S.showNums}"><span class="ti">${ic('chart')}</span><span class="tx">수치 표시<small>체중·체지방·근육 변화</small></span><span class="tg">${S.showNums?'ON':'OFF'}</span></button>
+            <button type="button" class="swm ${isPro()?'is-on':''}" data-act="premium"><span class="tx">워터마크<small>${isPro()?(S.wmOff?'없음':esc(wmLabel()))+(TRIAL?' · 써보는 중':' · 눌러서 바꾸기'):'우리가게 이름 알리기'}</small></span><span class="pr">PRO<i>${isPro()?'✓':'🔒'}</i></span></button>
           </div>
           <button type="button" class="btn btn--primary" style="width:100%" data-act="export">${ic('share')}공유 이미지 만들기</button>
         </div>
