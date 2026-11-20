@@ -1,5 +1,6 @@
 import { Composition } from "remotion";
 import { EmsPromo } from "./EmsPromo";
+import { EmsPromo2 } from "./EmsPromo2";
 import { TravelReel } from "./TravelReel";
 
 export const RemotionRoot: React.FC = () => {
@@ -17,6 +18,14 @@ export const RemotionRoot: React.FC = () => {
         id="EmsPromo"
         component={EmsPromo}
         durationInFrames={585}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="EmsPromo2"
+        component={EmsPromo2}
+        durationInFrames={600}
         fps={30}
         width={1080}
         height={1920}
