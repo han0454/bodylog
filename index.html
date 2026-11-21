@@ -201,6 +201,16 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .bc-type{display:flex;gap:8px;margin:0 0 14px}.bc-type span{flex:1;text-align:center;background:rgba(0,0,0,.2);border-radius:12px;padding:8px 6px;font-size:12px;color:#BFD3F2}.bc-type b{display:block;font-size:16px;margin-top:2px}
 .bc-card .lseg{background:rgba(255,255,255,.08);border-color:transparent}.bc-card .lseg button{color:#BFD3F2}.bc-card .lseg button small{color:#7F97BF}.bc-card .lseg button.is-on{background:#fff;color:#0A2552}.bc-card .lseg button.is-on small{color:#4D6A99}
 .bc-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bc-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 10px}
+.bct{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;gap:8px;min-height:84px;padding:12px 13px;border-radius:10px;text-align:left;font-weight:700;font-size:14.5px;line-height:1.25;color:#fff;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.16)}
+.bct:active{transform:scale(.97)}.bct small{display:block;font-weight:500;font-size:11.5px;opacity:.75;margin-top:2px}
+.bct .fr{border:2px solid currentColor;border-radius:4px;opacity:.9}
+.bct--r.is-on{background:#fff;color:#0A2552;border-color:#fff}
+.bct--r.is-on::after{content:"선택";position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;background:#0A2552;color:#fff}
+.bct--a{background:rgba(79,227,193,.12);border-color:rgba(79,227,193,.55)}
+.bct .ti{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:rgba(79,227,193,.2);color:#4FE3C1}.bct .ti .i{width:18px;height:18px}
+.bct--soon{opacity:.7;border-style:dashed}
+.bc-go{width:100%;height:52px;border-radius:10px;font-weight:700}
 .bc-card .btn--line{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
 .bc-card .btn--lime{background:#9BE22E;color:#14250A}.bc-card .btn[disabled]{opacity:.45;pointer-events:none}
 .bc-pv{width:100%;border-radius:14px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:zoom-in}
@@ -387,7 +397,9 @@ body.locked{overflow:hidden}
 .room-hd ol{margin:4px 0 0;padding:0;list-style:none;display:flex;gap:6px;flex-wrap:wrap}
 .room-hd ol li{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.88)}
 .room-hd .btn{align-self:flex-start;margin-top:8px;height:44px;padding:0 18px;border-radius:999px;font-weight:700}
-.room-hd--ba .btn{background:#35C8AF;color:#06201C}.room-hd--bc .btn{background:#9BE22E;color:#14250A}
+.room-hd--ba .btn{background:#35C8AF;color:#06201C}.room-hd--bc .btn{background:#4FE3C1;color:#06201C;border-radius:10px}
+/* 체성분 room: steps as neat square tiles (2x2) instead of pills */
+.room-hd--bc ol{display:grid;grid-template-columns:1fr 1fr;gap:6px}.room-hd--bc ol li{border-radius:8px;padding:9px 12px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
 .room-list h3{margin:0 0 10px;font-size:17px}.room-list h3 small{color:var(--muted);font-weight:500;font-size:13px;margin-left:6px}
 @media (min-width:961px){.hero{margin:0;border-radius:22px}.hs__s{height:440px}.hs__tx{left:48px;width:min(40%,360px)}}
 </style>
@@ -1466,14 +1478,14 @@ function bcCardHTML(c){
         <div class="bc-head"><span></span><span>BEFORE</span><span></span><span>AFTER</span><span>변화</span></div>
         <div class="bc-sum">${rows}</div>
         ${vb&&va?`<div class="bc-type"><span>BEFORE 체형<b style="color:${bcType(vb)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(vb)}</b></span><span>AFTER 체형<b style="color:${bcType(va)==='표준형'?'#9BE22E':'#FF7A7A'}">${bcType(va)}</b></span></div>`:''}
-        <div class="lseg" role="group" aria-label="체성분 그림 사이즈">
-          <button type="button" data-act="bc-ratio" data-v="916" class="${S.bcRatio!=='34'?'is-on':''}">9:16<small>릴스 · 스토리</small></button>
-          <button type="button" data-act="bc-ratio" data-v="34" class="${S.bcRatio==='34'?'is-on':''}">3:4<small>피드 게시물</small></button>
+        <!-- 한코치 sketch: [9:16][3:4] / [인바디 직접 입력][측정지 사진 업로드] / [공유 이미지 만들기] -->
+        <div class="bc-tiles" role="group" aria-label="체성분 그림 사이즈">
+          <button type="button" data-act="bc-ratio" data-v="916" class="bct bct--r ${S.bcRatio!=='34'?'is-on':''}"><span class="fr" style="width:16px;height:28px"></span><span>9:16<small>릴스 · 스토리</small></span></button>
+          <button type="button" data-act="bc-ratio" data-v="34" class="bct bct--r ${S.bcRatio==='34'?'is-on':''}"><span class="fr" style="width:21px;height:28px"></span><span>3:4<small>피드 게시물</small></span></button>
+          <button type="button" data-act="bc-input" class="bct bct--a"><span class="ti">${ic('edit')}</span><span>인바디 직접 입력<small>${ok?'숫자 고치기':'결과지 숫자 넣기'}</small></span></button>
+          <button type="button" data-act="bc-photo" class="bct bct--a bct--soon"><span class="ti">${ic('camera')}</span><span>측정지 사진 업로드<small>자동 읽기 준비 중</small></span></button>
         </div>
-        <div class="bc-btns">
-          <button type="button" class="btn btn--line" data-act="bc-input">${ic('edit')}${ok?'인바디 숫자 고치기':'인바디 숫자 넣기'}</button>
-          <button type="button" class="btn btn--lime" data-act="bc-export" ${ok?'':'disabled'}>${ic('share')}체성분 그림 만들기 · 저장</button>
-        </div>
+        <button type="button" class="btn btn--lime bc-go" data-act="bc-export" ${ok?'':'disabled'}>${ic('share')}공유 이미지 만들기</button>
       </div>
       <canvas id="bcPreview" class="bc-pv" data-act="bc-export" aria-label="체성분 그림 미리보기 (누르면 크게 보기)"></canvas>
     </div>
@@ -1869,6 +1881,7 @@ document.addEventListener('click',async e=>{
     case 'opt-name':S.showName=!S.showName;markDirty();renderMain();break;
     case 'opt-nums':S.showNums=!S.showNums;markDirty();renderMain();break;
     case 'export':exportCard();break;
+    case 'bc-photo':toast('측정지 사진 업로드는 준비 중이에요');break;
     case 'bc-ratio':S.bcRatio=b.dataset.v;markDirty();document.querySelectorAll('[data-act="bc-ratio"]').forEach(x=>x.classList.toggle('is-on',x.dataset.v===S.bcRatio));drawBCPreview();break;
     case 'bc-export':if(bcMissing(c).length){bcForm(c);break}exportBC(c);break;
     case 'bc-input':bcForm(c);break;
