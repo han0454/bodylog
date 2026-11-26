@@ -244,6 +244,7 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .stile--face{--t:#D9822B;--ts:#FBEEDD;--g1:#F2A94A;--g2:#E07A2E}
 .stile--name{--t:#D9475A;--ts:#FBE3E6;--g1:#F07282;--g2:#D9475A}
 .stile--nums{--t:#3D5BD6;--ts:#E3E9FB;--g1:#6F8DF0;--g2:#3D5BD6}
+.stile--ptext{--t:#16917C;--ts:#DDF5F0;--g1:#3FD3B8;--g2:#16917C}
 .stile--ratio{--t:var(--ink);--ts:var(--surface-2);--g1:#2A3136;--g2:#13171A;border-color:var(--line);min-height:84px}
 .stile--ratio.is-on{border-color:transparent}
 .stile--ratio.is-on::after{content:"선택";position:absolute;top:11px;right:11px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.25);color:#fff}
@@ -255,6 +256,9 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .srow .ti .i{width:20px;height:20px}
 .srow .tg{flex:none;width:56px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-num);font-size:13px;font-weight:800;letter-spacing:.04em;background:var(--surface);color:var(--muted);border:1.5px solid var(--line)}
 .srow.is-on .tg{background:linear-gradient(140deg,var(--g1),var(--g2));color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.ptcs{display:flex;gap:10px;flex-wrap:wrap}.ptc{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);box-shadow:inset 0 0 0 2px rgba(255,255,255,.0)}.ptc.is-on{border-color:var(--ink);box-shadow:0 0 0 3px var(--accent)}
+.ptrow{display:flex;gap:12px}.ptseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ptseg button{height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px}.ptseg button.is-on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.ptpv{width:min(240px,70%);align-self:center;border-radius:10px;display:block}
 .swm{display:flex;align-items:center;gap:12px;width:100%;min-height:96px;padding:16px 18px;border-radius:20px;text-align:left;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(140deg,#B98AF0,#7A45CC)}
 .swm .tx{flex:1;min-width:0}.swm small{font-size:13px;opacity:.9}
 .swm .pr{flex:none;display:flex;flex-direction:column;align-items:center;font-family:var(--font-num);font-size:28px;font-weight:800;letter-spacing:.04em;line-height:1}
@@ -1109,6 +1113,7 @@ function renderMain(){
             <button type="button" class="srow stile--face ${S.face?'is-on':''}" data-act="face" aria-pressed="${S.face}"><span class="ti">${ic('face')}</span><span class="tx">얼굴 가림<small>지운 부분을 반투명하게 덮어요</small></span><span class="tg">${S.face?'ON':'OFF'}</span></button>
             <button type="button" class="srow stile--name ${S.showName?'is-on':''}" data-act="opt-name" aria-pressed="${S.showName}"><span class="ti">${ic('type')}</span><span class="tx">이름 표시<small>${S.showName?esc(c.name):esc(maskName(c.name))+' 처럼 가려서 표시'}</small></span><span class="tg">${S.showName?'ON':'OFF'}</span></button>
             <button type="button" class="srow stile--nums ${S.showNums?'is-on':''}" data-act="opt-nums" aria-pressed="${S.showNums}"><span class="ti">${ic('chart')}</span><span class="tx">수치 표시<small>체중·체지방·근육 변화</small></span><span class="tg">${S.showNums?'ON':'OFF'}</span></button>
+            ${(()=>{const o=ptOf(c),on=!!(o.before.trim()||o.after.trim());return `<button type="button" class="srow stile--ptext ${on?'is-on':''}" data-act="ptext"><span class="ti">${ic('type')}</span><span class="tx">사진 위 글씨<small>${on?esc([o.before.trim(),o.after.trim()].filter(Boolean).join(' / ')):'예: 1주차 배 사진 · 색·굵게 고르기'}</small></span><span class="tg">${on?'ON':'넣기'}</span></button>`})()}
             <button type="button" class="swm ${isPro()?'is-on':''}" data-act="premium"><span class="tx">워터마크<small>${isPro()?(S.wmOff?'없음':esc(wmLabel()))+(TRIAL?' · 써보는 중':' · 눌러서 바꾸기'):'우리가게 이름 알리기 · 카드 문구 쓰기'}</small></span><span class="pr">PRO<i>${isPro()?'✓':'🔒'}</i></span></button>
           </div>
           <button type="button" class="btn btn--primary" style="width:100%" data-act="export">${ic('share')}공유 이미지 만들기</button>
@@ -1215,6 +1220,41 @@ function watermark(x,rx,by,k=1){
   const mx=X+pad,my=Y+(h-mk2)/2;x.globalAlpha=1;drawMark(x,mx,my,mk2,'#15191C',7.5);x.globalAlpha=.78;
   x.fillStyle='#fff';x.textBaseline='middle';x.fillText('BODYLOG',mx+mk2+Math.round(8*k),Y+h/2+1);x.restore();
 }
+// 사진 위 글씨 (예: '1주차 배 사진'): c.ptext = {before, after, color, bold, big, pos:'top'|'bottom'}
+const PT_COLORS=[['#FFFFFF','흰색'],['#111416','검정'],['#35C8AF','민트'],['#FFD84D','노랑'],['#FF4D4D','빨강'],['#FF8FC7','분홍']];
+const ptOf=c=>({before:'',after:'',color:'#FFFFFF',bold:true,big:false,pos:'bottom',...(c&&c.ptext||{})});
+function photoText(x,c,k,X,Y,pw,ph){
+  const o=ptOf(c),t=(o[k]||'').trim();if(!t)return;
+  let fs=o.big?60:42;const wt=o.bold?800:500,font=()=>`${wt} ${fs}px "IBM Plex Sans KR", sans-serif`;
+  x.save();x.font=font();while(fs>20&&x.measureText(t).width>pw-40){fs-=2;x.font=font()}
+  x.textAlign='center';x.textBaseline='alphabetic';const cx=X+pw/2,by=o.pos==='top'?Y+76+fs*.82:Y+ph-84;
+  const dark=o.color==='#111416';x.lineJoin='round';
+  x.shadowColor=dark?'rgba(255,255,255,.6)':'rgba(0,0,0,.55)';x.shadowBlur=10;
+  x.lineWidth=Math.max(3,fs*.14);x.strokeStyle=dark?'rgba(255,255,255,.85)':'rgba(10,12,14,.55)';x.strokeText(t,cx,by);
+  x.shadowBlur=0;x.fillStyle=o.color;x.fillText(t,cx,by);x.restore();
+}
+function photoTextSheet(){
+  const c=active();if(!c)return;const o=ptOf(c);
+  const sw=()=>PT_COLORS.map(([v,L])=>`<button type="button" class="ptc ${o.color===v?'is-on':''}" data-ptc="${v}" aria-label="${L}" title="${L}" style="background:${v}"></button>`).join('');
+  const seg=(key,a,b)=>`<div class="ptseg" data-ptk="${key}">${[[a[0],a[1]],[b[0],b[1]]].map(([v,L])=>`<button type="button" data-ptv="${v}" class="${String(o[key])===String(v)?'is-on':''}">${L}</button>`).join('')}</div>`;
+  modal(`<h3>사진 위 글씨</h3><p style="margin:0;color:var(--muted);font-size:12.5px;line-height:1.5">공유 이미지 사진 위에 글씨를 넣어요. 예: 1주차 배 사진</p>
+    <label class="form-field">BEFORE 사진 글씨<input id="pt-before" maxlength="20" value="${esc(o.before)}" placeholder="예: 1주차 배 사진"></label>
+    <label class="form-field">AFTER 사진 글씨<input id="pt-after" maxlength="20" value="${esc(o.after)}" placeholder="예: 12주차 -4.4kg"></label>
+    <div class="form-field" style="gap:8px">글씨 색<div class="ptcs">${sw()}</div></div>
+    <div class="ptrow"><div class="form-field" style="gap:8px;flex:1">굵게${seg('bold',['true','굵게'],['false','보통'])}</div><div class="form-field" style="gap:8px;flex:1">크기${seg('big',['false','보통'],['true','크게'])}</div></div>
+    <div class="form-field" style="gap:8px">위치${seg('pos',['top','사진 위쪽'],['bottom','사진 아래쪽'])}</div>
+    <canvas id="ptPreview" class="ptpv" aria-label="글씨 미리보기"></canvas>
+    <div class="row"><button type="button" class="btn btn--line" data-ptclear>글씨 지우기</button><span class="grow"></span><button type="button" class="btn btn--line" data-ptcancel>취소</button><button type="button" class="btn btn--primary" data-ptok>넣기</button></div>`,sh=>{
+    const live=()=>{const keep=c.ptext;c.ptext={...o};const pv=sh.querySelector('#ptPreview'),cd=renderCard(.3);c.ptext=keep;if(!keep)delete c.ptext;pv.width=cd.width;pv.height=cd.height;pv.getContext('2d').drawImage(cd,0,0)};
+    sh.querySelector('#pt-before').addEventListener('input',e=>{o.before=e.target.value;live()});
+    sh.querySelector('#pt-after').addEventListener('input',e=>{o.after=e.target.value;live()});
+    sh.querySelectorAll('[data-ptc]').forEach(b=>b.addEventListener('click',()=>{o.color=b.dataset.ptc;sh.querySelectorAll('[data-ptc]').forEach(z=>z.classList.toggle('is-on',z===b));live()}));
+    sh.querySelectorAll('.ptseg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const key=g.dataset.ptk,v=b.dataset.ptv;o[key]=key==='pos'?v:v==='true';g.querySelectorAll('button').forEach(z=>z.classList.toggle('is-on',z===b));live()})));
+    sh.querySelector('[data-ptok]').addEventListener('click',()=>{c.ptext={...o};touch(c);closeModal();renderMain();toast(o.before.trim()||o.after.trim()?'사진에 글씨를 넣었어요':'사진 글씨를 비웠어요')});
+    sh.querySelector('[data-ptcancel]').addEventListener('click',closeModal);
+    sh.querySelector('[data-ptclear]').addEventListener('click',()=>{o.before='';o.after='';sh.querySelector('#pt-before').value='';sh.querySelector('#pt-after').value='';live()});
+    live()});
+}
 let pvCanvas=null;
 function renderCard(scale=1){
   const c=active();const W=1080,H=S.ratio==='916'?1920:1440;
@@ -1222,7 +1262,7 @@ function renderCard(scale=1){
   const x=cv.getContext('2d');x.scale(scale,scale);
   const ink='#F1F4F3',mut='#8C979E',acc='#35C8AF',bg='#111416';
   x.fillStyle=bg;x.fillRect(0,0,W,H);
-  const tall=S.ratio==='916',M=56,gap=18,pw=(W-M*2-gap)/2,ph34=pw*4/3;let ph=ph34;
+  const tall=S.ratio==='916',M=tall?56:40,gap=18,pw=(W-M*2-gap)/2,ph34=pw*4/3;let ph=ph34;
   let y=tall?150:84;
   x.textBaseline='alphabetic';
   // brand
@@ -1250,10 +1290,10 @@ function renderCard(scale=1){
     x.fillStyle=ink;x.font='700 34px "IBM Plex Sans KR", sans-serif';x.fillText(`담당 ${S.coach||'핏코치'}`,M+pw0,y);
   }else x.fillText(`${S.showName?c.name:maskName(c.name)} 님 · ${c.age?c.age+'세 · ':''}담당 핏코치`,M,y);
   y+=tall?56:40;
+  const hasNums=S.showNums&&METRICS.some(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
   if(tall){ // 9:16: photos grow to fill the card instead of leaving an empty bottom
-    const hasNums=S.showNums&&METRICS.some(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
     ph=Math.max(ph34,H-96-60-y-(hasNums?110+200:60));
-  }
+  }else ph=Math.max(ph34,H-y-(hasNums?290:120)); // 3:4: same idea, so the photos use the whole card (no empty bottom)
   const f=ph/ph34; // same aligned 3:4 layout, scaled up and centred, so before/after stay matched
   sides.forEach(([k,L],i)=>{
     const X=M+i*(pw+gap);x.save();rr(x,X,y,pw,ph,22);x.clip();x.fillStyle='#1C2125';x.fillRect(X,y,pw,ph);
@@ -1262,23 +1302,24 @@ function renderCard(scale=1){
     x.font='700 22px Sora, sans-serif';const tw=x.measureText(L).width+28;
     x.fillStyle=i?acc:'rgba(17,20,22,.72)';rr(x,X+16,y+16,tw,40,10);x.fill();x.fillStyle=i?'#06201C':'#fff';x.fillText(L,X+30,y+44);
     if(ok)watermark(x,X+pw-16,y+ph-16,tall?1:.9);
+    if(ok)photoText(x,c,k,X,y,pw,ph);
     x.fillStyle='#C9D1D6';x.font='600 32px Sora, sans-serif';x.fillText(c[k].date?fmtDate(c[k].date):'',X+4,y+ph+48);
   });
-  y+=ph+(tall?110:86);
+  y+=ph+(tall?110:70);
   if(S.showNums){
     const cols=METRICS.filter(([f])=>!isNaN(parseFloat(c.before[f]))&&!isNaN(parseFloat(c.after[f])));
     if(cols.length){
-      const cw=(W-M*2-(cols.length-1)*14)/cols.length,ch=tall?200:170,q=cols.length>3?.82:1,px=cols.length>3?18:24;
+      const cw=(W-M*2-(cols.length-1)*14)/cols.length,ch=tall?200:150,q=cols.length>3?.82:1,px=cols.length>3?18:24;
       cols.forEach(([f,lab,u,low,du],i)=>{const X=M+i*(cw+14);x.fillStyle='#1A1F22';rr(x,X,y,cw,ch,20);x.fill();
         const A=parseFloat(c.before[f]),B=parseFloat(c.after[f]),d=Math.round((B-A)*10)/10;const good=low?d<0:d>0;
-        x.fillStyle=mut;x.font='500 24px "IBM Plex Sans KR", sans-serif';x.fillText(lab,X+px,y+44);
-        x.fillStyle=d===0?ink:good?acc:'#F08A80';x.font=`700 ${Math.round((tall?58:50)*q)}px Sora, sans-serif`;const t=(d>0?'+':'')+d;x.fillText(t,X+px,y+(tall?116:104));
-        const tw=x.measureText(t).width;x.font=`600 ${Math.round(26*q)}px Sora, sans-serif`;x.fillText(du,X+px+6+tw,y+(tall?116:104));
-        x.fillStyle=mut;x.font=`500 ${Math.round(22*q)}px "IBM Plex Sans KR", sans-serif`;x.fillText(`${A} → ${B} ${u}`,X+px,y+ch-30);
+        x.fillStyle=mut;x.font='500 24px "IBM Plex Sans KR", sans-serif';x.fillText(lab,X+px,y+(tall?44:40));
+        x.fillStyle=d===0?ink:good?acc:'#F08A80';x.font=`700 ${Math.round((tall?58:50)*q)}px Sora, sans-serif`;const t=(d>0?'+':'')+d;x.fillText(t,X+px,y+(tall?116:96));
+        const tw=x.measureText(t).width;x.font=`600 ${Math.round(26*q)}px Sora, sans-serif`;x.fillText(du,X+px+6+tw,y+(tall?116:96));
+        x.fillStyle=mut;x.font=`500 ${Math.round(22*q)}px "IBM Plex Sans KR", sans-serif`;x.fillText(`${A} → ${B} ${u}`,X+px,y+ch-(tall?30:24));
       });
     }
   }
-  x.fillStyle='#4D575E';x.font='500 22px "IBM Plex Sans KR", sans-serif';x.fillText('개인차가 있을 수 있습니다 · BODYLOG로 기록',M,H-(tall?96:56));
+  x.fillStyle='#4D575E';x.font='500 22px "IBM Plex Sans KR", sans-serif';x.fillText('개인차가 있을 수 있습니다 · BODYLOG로 기록',M,H-(tall?96:36));
   trialMark(x,W,H);
   return cv;
 }
@@ -1887,6 +1928,7 @@ document.addEventListener('click',async e=>{
     case 'bc-input':bcForm(c);break;
     case 'snap-bc':{const sn=(c.history||[]).find(x=>x.id===b.dataset.id);if(sn)exportBC(c,sn);break}
     case 'premium':premiumSheet();break;
+    case 'ptext':photoTextSheet();break;
     case 'pro-on':S.plan='premium';TRIAL=false;trialBar();markDirty();premiumSheet();renderMain();toast('프로를 시작했어요 (테스트)');break;
     case 'trial-on':TRIAL=true;trialBar();renderMain();premiumSheet();break; // 써보기: first the 상호·코치 이름 form, then the card
     case 'trial-off':TRIAL=false;TRIAL_HL={};stripTrialErase();trialBar();markDirty();closeModal();renderMain();toast('써보기를 끝냈어요');break;
